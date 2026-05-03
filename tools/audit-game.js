@@ -154,7 +154,15 @@ expectSource(/landmark-witcher-mural/, "Route should include a generated Centrum
 expectSource(/createTouchControls\(/, "Mobile version should expose on-screen touch controls");
 expectSource(/touchState\.accelerate/, "Touch controls should drive acceleration");
 expectSource(/touchState\.brake/, "Touch controls should drive braking");
+expectSource(/makeTouchThrottleSlider\(/, "Mobile controls should include a throttle slider, not only tap buttons");
+expectSource(/touchState\.throttle/, "Touch throttle slider should drive the tram controller");
+expectSource(/updateTouchThrottleSlider\(/, "Touch throttle slider should visually track the current controller value");
 expectSource(/useActionButton\(/, "Door and bell action should be shared by keyboard and touch controls");
+expectSource(/createTutorialOverlay\(/, "Game should include an in-game tutorial overlay");
+expectSource(/updateTutorial\(/, "Tutorial prompts should be triggered by route context");
+expectSource(/showTutorial\(/, "Tutorial prompts should be one-shot and non-spammy");
+expectSource(/writeRunHistory\(/, "End screen should persist a recent run history");
+expectSource(/addHistoryPanel\(/, "End screen should render recent runs for replay motivation");
 expectSource(/BASE_WIDTH/, "Game should keep a base 16:9 width for desktop layouts");
 expectSource(/visualViewport/, "Mobile landscape should expand the logical game width to match wide phone screens");
 expectSource(/orientationchange/, "Mobile orientation changes should rebuild the Phaser canvas with the correct aspect ratio");

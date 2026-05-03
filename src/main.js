@@ -579,6 +579,8 @@ class GameScene extends Phaser.Scene {
     this.lastBgMessage = "zarzew";
     this.switchChoice = "straight";
     this.switchPenaltyUntil = 0;
+    this.tutorialShown = {};
+    this.tutorialUntil = 0;
     this.stats = {
       servedStops: 0,
       missedStops: 0,
@@ -604,6 +606,7 @@ class GameScene extends Phaser.Scene {
     this.createHud();
     this.createPauseOverlay();
     this.createControls();
+    this.createTutorialOverlay();
     this.createRideLoop();
     this.showMessage(`${this.mode.label}: dowiez pasazerow na Teofilow`, 2400, "#f4d35e");
   }
@@ -835,7 +838,8 @@ class GameScene extends Phaser.Scene {
   createControls() {
     this.touchState = {
       accelerate: false,
-      brake: false
+      brake: false,
+      throttle: null
     };
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys({
@@ -885,11 +889,73 @@ class GameScene extends Phaser.Scene {
     };
 
     makeButton(116, 590, 150, 72, "HAMUJ", 0xffb22e, () => { this.touchState.brake = true; }, () => { this.touchState.brake = false; });
-    makeButton(WIDTH - 116, 590, 150, 72, "JAZDA", 0x50d2c2, () => { this.touchState.accelerate = true; }, () => { this.touchState.accelerate = false; });
+    this.makeTouchThrottleSlider(WIDTH - 116, 512);
     makeButton(WIDTH / 2, 620, 154, 64, "DRZWI\nDZWONEK", 0xf4d35e, () => this.useActionButton());
     makeButton(WIDTH - 274, 672, 104, 54, "Q\nSKRET", 0x8fb7e8, () => this.setSwitchChoice("left"));
     makeButton(WIDTH - 150, 672, 104, 54, "E\nPROSTO", 0x8fb7e8, () => this.setSwitchChoice("straight"));
     makeButton(WIDTH - 54, 112, 72, 44, "PAUZA", 0xf4efe4, () => this.togglePause());
+  }
+
+  makeTouchThrottleSlider(x, y) {
+    const trackH = 184;
+    const bg = this.add.rectangle(x, y, 92, trackH + 52, 0x0c1116, 0.64)
+      .setOrigin(0.5)
+      .setStrokeStyle(2, 0x50d2c2, 0.88);
+    const rail = this.add.rectangle(x, y + 6, 16, trackH, 0x26323a, 1).setOrigin(0.5);
+    const fill = this.add.rectangle(x, y + trackH / 2 + 6, 16, 0, 0x50d2c2, 0.9).setOrigin(0.5, 1);
+    const knob = this.add.rectangle(x, y + trackH / 2 + 6, 58, 20, 0xf4efe4, 0.94)
+      .setOrigin(0.5)
+      .setStrokeStyle(2, 0x50d2c2, 1);
+    const label = this.add.text(x, y - trackH / 2 - 12, "NAST.", {
+      fontSize: "13px",
+      fontStyle: "700",
+      color: "#f4efe4"
+    }).setOrigin(0.5);
+    const value = this.add.text(x, y + trackH / 2 + 28, "0%", {
+      fontSize: "13px",
+      fontStyle: "700",
+      color: "#50d2c2"
+    }).setOrigin(0.5);
+    const zone = this.add.zone(x, y + 6, 112, trackH + 36).setOrigin(0.5).setInteractive();
+    const setFromPointer = (pointer) => {
+      pointer.event?.preventDefault?.();
+      const localY = Phaser.Math.Clamp(pointer.y, y - trackH / 2 + 6, y + trackH / 2 + 6);
+      this.touchState.throttle = Phaser.Math.Clamp(1 - ((localY - (y - trackH / 2 + 6)) / trackH), 0, 1);
+      this.updateTouchThrottleSlider();
+    };
+    zone.on("pointerdown", setFromPointer);
+    zone.on("pointermove", (pointer) => {
+      if (pointer.isDown) setFromPointer(pointer);
+    });
+    zone.on("pointerup", (pointer) => pointer.event?.preventDefault?.());
+    zone.on("pointerupoutside", (pointer) => pointer.event?.preventDefault?.());
+    this.touchThrottle = { x, y: y + 6, trackH, fill, knob, value };
+    this.touchLayer.add([bg, rail, fill, knob, label, value, zone]);
+    this.updateTouchThrottleSlider();
+  }
+
+  updateTouchThrottleSlider() {
+    if (!this.touchThrottle) return;
+    const target = this.touchState.throttle ?? this.throttle;
+    const amount = Phaser.Math.Clamp(target, 0, 1);
+    this.touchThrottle.fill.height = Math.max(2, this.touchThrottle.trackH * amount);
+    this.touchThrottle.knob.y = this.touchThrottle.y + this.touchThrottle.trackH / 2 - this.touchThrottle.trackH * amount;
+    this.touchThrottle.value.setText(`${Math.round(amount * 100)}%`);
+  }
+
+  createTutorialOverlay() {
+    this.tutorialLayer = this.add.container(WIDTH / 2, 154).setDepth(1450).setVisible(false);
+    this.tutorialLayer.add(this.add.rectangle(0, 0, 620, 64, 0x0c1116, 0.9)
+      .setStrokeStyle(3, 0xf4d35e, 0.95));
+    this.tutorialText = this.add.text(0, 0, "", {
+      fontSize: "15px",
+      fontStyle: "700",
+      color: "#f4efe4",
+      align: "center",
+      lineSpacing: 3,
+      wordWrap: { width: 570, useAdvancedWrap: true }
+    }).setOrigin(0.5);
+    this.tutorialLayer.add(this.tutorialText);
   }
 
   createPauseOverlay() {
@@ -938,6 +1004,7 @@ class GameScene extends Phaser.Scene {
     this.updateSignals();
     this.updateWorld(dt);
     this.updateRideLoop(dt);
+    this.updateTutorial();
     this.updateHud();
     this.checkEnd();
   }
@@ -952,12 +1019,17 @@ class GameScene extends Phaser.Scene {
       this.setSwitchChoice("straight");
     }
     if (!this.doorsOpen) {
+      if (this.touchState.throttle !== null) {
+        this.throttle = Phaser.Math.Linear(this.throttle, this.touchState.throttle, Math.min(1, dt * 7));
+      }
       if (accelerate) this.throttle += 0.75 * dt;
       if (brake) this.throttle -= 1.15 * dt;
     } else {
       this.throttle = 0;
+      if (this.touchState.throttle !== null) this.touchState.throttle = 0;
     }
     this.throttle = Phaser.Math.Clamp(this.throttle, 0, 1);
+    this.updateTouchThrottleSlider();
 
     const throttleRate = Math.abs(this.throttle - this.lastThrottle) / Math.max(dt, 0.016);
     this.inputJerk = Math.max(0, throttleRate - 0.95);
@@ -992,6 +1064,38 @@ class GameScene extends Phaser.Scene {
     } else {
       this.ringBell();
     }
+  }
+
+  updateTutorial() {
+    if (this.modeKey === "training") {
+      this.showTutorial("training", "Trening: spokojnie sprawdz nastawnik, hamowanie i drzwi. Wynik ma znaczenie, ale kurs nie konczy sie od razu po bledzie.", 5000);
+    } else {
+      const mobile = this.touchLayer?.visible;
+      this.showTutorial("start", mobile
+        ? "Sterowanie dotykowe: prawy suwak to nastawnik, lewy przycisk hamuje, srodek otwiera drzwi albo dzwoni."
+        : "A/D albo strzalki steruja nastawnikiem. SPACJA otwiera drzwi na przystanku albo uruchamia dzwonek.", 5200);
+    }
+    const nextStop = this.activeStop();
+    if (nextStop && nextStop.distance - this.distance < 760 && nextStop.distance - this.distance > 420) {
+      this.showTutorial("first-stop", "Przystanek przed Toba: zejdź z predkoscia prawie do zera, zatrzymaj sie w zoltej strefie i otworz drzwi.", 4300);
+    }
+    const car = this.events.find((event) => event.type === "car" && !event.cleared && event.distance - this.distance < 920 && event.distance - this.distance > 520);
+    if (car) this.showTutorial("first-car", "Auto blokuje tor: zwolnij, a gdy jest blisko, uzyj dzwonka. Auto powinno zjechac z torowiska.", 4300);
+    const sw = this.nextRelevantSwitch();
+    if (sw && sw.distance - this.distance < 1200 && sw.distance - this.distance > 760) {
+      this.showTutorial("first-switch", "Zwrotnica: ustaw kierunek zanim do niej dojedziesz. Q = skret, E = prosto; na telefonie uzyj przyciskow Q/E.", 4500);
+    }
+    if (this.time.now > this.tutorialUntil) this.tutorialLayer.setVisible(false);
+  }
+
+  showTutorial(key, text, duration = 4200) {
+    if (this.tutorialShown[key] || !this.tutorialLayer) return;
+    if (this.tutorialLayer.visible && this.time.now < this.tutorialUntil) return;
+    this.tutorialShown[key] = true;
+    this.tutorialText.setText(text);
+    this.fitText(this.tutorialText, 560, 15, 11);
+    this.tutorialLayer.setVisible(true);
+    this.tutorialUntil = Math.max(this.tutorialUntil, this.time.now + duration);
   }
 
   updateMotion(dt) {
@@ -2259,14 +2363,28 @@ class GameScene extends Phaser.Scene {
     const highScore = this.readHighScore();
     const isRecord = finalScore > highScore;
     if (isRecord) this.writeHighScore(finalScore);
+    const grade = this.courseGrade(title === "Kurs przerwany");
+    const history = this.writeRunHistory({
+      score: finalScore,
+      grade,
+      mode: this.mode.label,
+      vehicle: this.vehicle.name,
+      stops: this.stats.servedStops,
+      smoothness: Math.round(this.smoothness),
+      satisfaction: Math.round(this.satisfaction),
+      punctuality: Math.round(this.punctuality),
+      time: this.formatTime(this.timeLeft)
+    });
 
     const layer = this.add.container(0, 0).setDepth(2200);
     layer.add(this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x050607, 0.68).setOrigin(0));
-    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, 760, 500, 0x0d1318, 0.98)
+    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, 960, 504, 0x0d1318, 0.98)
       .setStrokeStyle(5, 0xf4d35e, 1));
-    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, 704, 424, 0x101820, 0.94)
+    layer.add(this.add.rectangle(WIDTH / 2 - 136, HEIGHT / 2 + 10, 640, 420, 0x101820, 0.94)
       .setStrokeStyle(2, 0x56636c, 1));
-    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2 - 205, 690, 14, 0x26323a, 0.9));
+    layer.add(this.add.rectangle(WIDTH / 2 + 286, HEIGHT / 2 + 10, 238, 420, 0x101820, 0.94)
+      .setStrokeStyle(2, 0x56636c, 1));
+    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2 - 206, 890, 14, 0x26323a, 0.9));
 
     layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 218, title, {
       fontSize: "32px",
@@ -2291,41 +2409,42 @@ class GameScene extends Phaser.Scene {
       }).setOrigin(0.5));
     }
 
-    this.addResultBars(layer, WIDTH / 2 - 330, HEIGHT / 2 - 130);
+    this.addResultBars(layer, WIDTH / 2 - 430, HEIGHT / 2 - 130);
 
     const lines = detail.split("\n");
     const summary = lines.slice(0, 7).join("\n");
     const missions = lines.slice(8).join("\n");
-    layer.add(this.add.text(WIDTH / 2 - 330, HEIGHT / 2 - 108, "RAPORT KURSU", {
+    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 - 108, "RAPORT KURSU", {
       fontSize: "16px",
       fontStyle: "700",
       color: "#f4d35e"
     }));
-    layer.add(this.add.text(WIDTH / 2 - 330, HEIGHT / 2 - 78, summary, {
-      fontSize: "14px",
+    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 - 78, summary, {
+      fontSize: "13px",
       color: "#d9d3c4",
       align: "left",
-      lineSpacing: 4,
-      wordWrap: { width: 650, useAdvancedWrap: true }
+      lineSpacing: 3,
+      wordWrap: { width: 600, useAdvancedWrap: true }
     }));
-    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2 + 72, 650, 2, 0x34434b, 1));
-    layer.add(this.add.text(WIDTH / 2 - 330, HEIGHT / 2 + 92, "CELE", {
+    layer.add(this.add.rectangle(WIDTH / 2 - 136, HEIGHT / 2 + 72, 590, 2, 0x34434b, 1));
+    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 + 92, "CELE", {
       fontSize: "16px",
       fontStyle: "700",
       color: "#f4d35e"
     }));
-    layer.add(this.add.text(WIDTH / 2 - 330, HEIGHT / 2 + 120, missions, {
-      fontSize: "14px",
+    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 + 120, missions, {
+      fontSize: "13px",
       color: "#f4efe4",
       align: "left",
       lineSpacing: 3,
-      wordWrap: { width: 650, useAdvancedWrap: true }
+      wordWrap: { width: 600, useAdvancedWrap: true }
     }));
-    layer.add(this.add.text(WIDTH / 2 - 330, HEIGHT / 2 + 205, `Rekord: ${Math.max(finalScore, highScore)}`, {
+    this.addHistoryPanel(layer, WIDTH / 2 + 180, HEIGHT / 2 - 162, history);
+    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 + 205, `Rekord: ${Math.max(finalScore, highScore)}`, {
       fontSize: "16px",
       color: "#f4efe4"
     }));
-    layer.add(this.add.text(WIDTH / 2 + 330, HEIGHT / 2 + 205, "R: jeszcze raz    Esc: menu", {
+    layer.add(this.add.text(WIDTH / 2 + 430, HEIGHT / 2 + 205, "R: jeszcze raz    Esc: menu", {
       fontSize: "17px",
       fontStyle: "700",
       color: "#f4d35e"
@@ -2345,6 +2464,37 @@ class GameScene extends Phaser.Scene {
       layer.add(this.add.text(x, yy - 7, label, { fontSize: "11px", color: "#d9d3c4", fontStyle: "700" }));
       layer.add(this.add.rectangle(x + 72, yy, 130, 7, 0x26323a, 1).setOrigin(0, 0.5));
       layer.add(this.add.rectangle(x + 72, yy, Phaser.Math.Clamp(value, 0, 100) * 1.3, 7, color, 0.95).setOrigin(0, 0.5));
+    });
+  }
+
+  addHistoryPanel(layer, x, y, history) {
+    layer.add(this.add.text(x, y, "OSTATNIE KURSY", {
+      fontSize: "16px",
+      fontStyle: "700",
+      color: "#f4d35e"
+    }));
+    if (!history.length) {
+      layer.add(this.add.text(x, y + 34, "Brak historii", { fontSize: "12px", color: "#d9d3c4" }));
+      return;
+    }
+    history.slice(0, 5).forEach((run, index) => {
+      const yy = y + 34 + index * 58;
+      const color = index === 0 ? 0xf4d35e : 0x56636c;
+      layer.add(this.add.rectangle(x + 106, yy + 20, 212, 48, 0x0d1318, 0.96)
+        .setStrokeStyle(1, color, index === 0 ? 0.95 : 0.65));
+      layer.add(this.add.text(x + 8, yy + 3, `${index + 1}. ${run.score}  ${run.grade}`, {
+        fontSize: "14px",
+        fontStyle: "700",
+        color: index === 0 ? "#ffb22e" : "#f4efe4"
+      }));
+      layer.add(this.add.text(x + 8, yy + 22, `${run.mode} | ${run.vehicle.replace("Konstal ", "").replace("Pesa ", "")}`, {
+        fontSize: "10px",
+        color: "#d9d3c4"
+      }));
+      layer.add(this.add.text(x + 8, yy + 36, `Plyn ${run.smoothness}%  Zad ${run.satisfaction}%`, {
+        fontSize: "10px",
+        color: "#8ea0a8"
+      }));
     });
   }
 
@@ -2402,6 +2552,26 @@ class GameScene extends Phaser.Scene {
     } catch (_) {
       // Local storage can be blocked in some browser contexts.
     }
+  }
+
+  readRunHistory() {
+    try {
+      const raw = window.localStorage.getItem("ostatni-kurs-history");
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  writeRunHistory(run) {
+    const history = [run, ...this.readRunHistory()].slice(0, 5);
+    try {
+      window.localStorage.setItem("ostatni-kurs-history", JSON.stringify(history));
+    } catch (_) {
+      // Local storage can be blocked in some browser contexts.
+    }
+    return history;
   }
 }
 
