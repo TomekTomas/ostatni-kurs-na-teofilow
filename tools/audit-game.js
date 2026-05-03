@@ -155,8 +155,13 @@ expectSource(/createTouchControls\(/, "Mobile version should expose on-screen to
 expectSource(/touchState\.accelerate/, "Touch controls should drive acceleration");
 expectSource(/touchState\.brake/, "Touch controls should drive braking");
 expectSource(/useActionButton\(/, "Door and bell action should be shared by keyboard and touch controls");
+expectSource(/BASE_WIDTH/, "Game should keep a base 16:9 width for desktop layouts");
+expectSource(/visualViewport/, "Mobile landscape should expand the logical game width to match wide phone screens");
+expectSource(/orientationchange/, "Mobile orientation changes should rebuild the Phaser canvas with the correct aspect ratio");
 expectHtml(/user-scalable=no/, "Mobile viewport should prevent accidental zoom during play");
 expectCss(/touch-action:\s*none/, "Mobile CSS should prevent browser gestures from stealing gameplay input");
+expectCss(/100dvw/, "Game container should fill the dynamic mobile viewport width");
+expectCss(/100dvh/, "Game container should fill the dynamic mobile viewport height");
 
 if (/this\.smoothness\s*-=/g.test(source)) {
   fail("Smoothness must not be permanently decremented; use addRidePenalty/updateRideComfort");

@@ -1,5 +1,9 @@
-const WIDTH = 1280;
+const BASE_WIDTH = 1280;
 const HEIGHT = 720;
+const WIDTH = Math.max(
+  BASE_WIDTH,
+  Math.round(((window.visualViewport?.width || window.innerWidth || BASE_WIDTH) / (window.visualViewport?.height || window.innerHeight || HEIGHT)) * HEIGHT)
+);
 const TRACK_Y = 560;
 const TRAM_BASE_Y = 628;
 const ROUTE_SCALE = 5500;
@@ -881,11 +885,11 @@ class GameScene extends Phaser.Scene {
     };
 
     makeButton(116, 590, 150, 72, "HAMUJ", 0xffb22e, () => { this.touchState.brake = true; }, () => { this.touchState.brake = false; });
-    makeButton(1164, 590, 150, 72, "JAZDA", 0x50d2c2, () => { this.touchState.accelerate = true; }, () => { this.touchState.accelerate = false; });
-    makeButton(640, 620, 154, 64, "DRZWI\nDZWONEK", 0xf4d35e, () => this.useActionButton());
-    makeButton(1006, 672, 104, 54, "Q\nSKRET", 0x8fb7e8, () => this.setSwitchChoice("left"));
-    makeButton(1130, 672, 104, 54, "E\nPROSTO", 0x8fb7e8, () => this.setSwitchChoice("straight"));
-    makeButton(1226, 112, 72, 44, "PAUZA", 0xf4efe4, () => this.togglePause());
+    makeButton(WIDTH - 116, 590, 150, 72, "JAZDA", 0x50d2c2, () => { this.touchState.accelerate = true; }, () => { this.touchState.accelerate = false; });
+    makeButton(WIDTH / 2, 620, 154, 64, "DRZWI\nDZWONEK", 0xf4d35e, () => this.useActionButton());
+    makeButton(WIDTH - 274, 672, 104, 54, "Q\nSKRET", 0x8fb7e8, () => this.setSwitchChoice("left"));
+    makeButton(WIDTH - 150, 672, 104, 54, "E\nPROSTO", 0x8fb7e8, () => this.setSwitchChoice("straight"));
+    makeButton(WIDTH - 54, 112, 72, 44, "PAUZA", 0xf4efe4, () => this.togglePause());
   }
 
   createPauseOverlay() {
@@ -2428,6 +2432,12 @@ window.addEventListener("load", () => {
     return originalTextFactory.call(this, x, y, text, { fontFamily: FONT_FAMILY, ...style });
   };
   const startGame = () => new Phaser.Game(config);
+  const reloadForLandscape = () => {
+    if (!("ontouchstart" in window) && navigator.maxTouchPoints <= 0) return;
+    window.clearTimeout(window.__lastCourseResizeTimer);
+    window.__lastCourseResizeTimer = window.setTimeout(() => window.location.reload(), 260);
+  };
+  window.addEventListener("orientationchange", reloadForLandscape, { passive: true });
   if (document.fonts && document.fonts.load) {
     document.fonts.load('16px "Lexend Deca"').finally(startGame);
   } else {
