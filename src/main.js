@@ -829,6 +829,10 @@ class GameScene extends Phaser.Scene {
   }
 
   createControls() {
+    this.touchState = {
+      accelerate: false,
+      brake: false
+    };
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys({
       a: Phaser.Input.Keyboard.KeyCodes.A,
@@ -840,6 +844,48 @@ class GameScene extends Phaser.Scene {
       r: Phaser.Input.Keyboard.KeyCodes.R,
       esc: Phaser.Input.Keyboard.KeyCodes.ESC
     });
+    this.createTouchControls();
+  }
+
+  createTouchControls() {
+    const hasTouch = this.sys.game.device.input.touch || navigator.maxTouchPoints > 0;
+    this.touchLayer = this.add.container(0, 0).setDepth(1500).setVisible(hasTouch);
+    if (!hasTouch) return;
+
+    const makeButton = (x, y, w, h, label, color, onDown, onUp = null) => {
+      const bg = this.add.rectangle(x, y, w, h, 0x0c1116, 0.64)
+        .setOrigin(0.5)
+        .setStrokeStyle(2, color, 0.88);
+      const text = this.add.text(x, y, label, {
+        fontSize: "15px",
+        fontStyle: "700",
+        color: "#f4efe4",
+        align: "center"
+      }).setOrigin(0.5);
+      const zone = this.add.zone(x, y, w, h).setOrigin(0.5).setInteractive();
+      zone.on("pointerdown", (pointer) => {
+        pointer.event?.preventDefault?.();
+        bg.setFillStyle(color, 0.42);
+        onDown();
+      });
+      const release = (pointer) => {
+        pointer?.event?.preventDefault?.();
+        bg.setFillStyle(0x0c1116, 0.64);
+        if (onUp) onUp();
+      };
+      zone.on("pointerup", release);
+      zone.on("pointerout", release);
+      zone.on("pointerupoutside", release);
+      this.touchLayer.add([bg, text, zone]);
+      return { bg, text, zone };
+    };
+
+    makeButton(116, 590, 150, 72, "HAMUJ", 0xffb22e, () => { this.touchState.brake = true; }, () => { this.touchState.brake = false; });
+    makeButton(1164, 590, 150, 72, "JAZDA", 0x50d2c2, () => { this.touchState.accelerate = true; }, () => { this.touchState.accelerate = false; });
+    makeButton(640, 620, 154, 64, "DRZWI\nDZWONEK", 0xf4d35e, () => this.useActionButton());
+    makeButton(1006, 672, 104, 54, "Q\nSKRET", 0x8fb7e8, () => this.setSwitchChoice("left"));
+    makeButton(1130, 672, 104, 54, "E\nPROSTO", 0x8fb7e8, () => this.setSwitchChoice("straight"));
+    makeButton(1226, 112, 72, 44, "PAUZA", 0xf4efe4, () => this.togglePause());
   }
 
   createPauseOverlay() {
@@ -871,10 +917,7 @@ class GameScene extends Phaser.Scene {
       return;
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.p)) {
-      this.paused = !this.paused;
-      this.pauseLayer.setVisible(this.paused);
-    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.p)) this.togglePause();
     if (this.paused) {
       this.updateRideLoop(0, true);
       if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.scene.restart({ vehicleKey: this.vehicleKey, modeKey: this.modeKey });
@@ -896,15 +939,13 @@ class GameScene extends Phaser.Scene {
   }
 
   updateInput(dt) {
-    const accelerate = this.cursors.up.isDown || this.cursors.right.isDown || this.keys.d.isDown;
-    const brake = this.cursors.down.isDown || this.cursors.left.isDown || this.keys.a.isDown;
+    const accelerate = this.cursors.up.isDown || this.cursors.right.isDown || this.keys.d.isDown || this.touchState.accelerate;
+    const brake = this.cursors.down.isDown || this.cursors.left.isDown || this.keys.a.isDown || this.touchState.brake;
     if (Phaser.Input.Keyboard.JustDown(this.keys.q)) {
-      this.switchChoice = "left";
-      this.showMessage("Zwrotnica ustawiona: SKRET", 650, "#f4d35e");
+      this.setSwitchChoice("left");
     }
     if (Phaser.Input.Keyboard.JustDown(this.keys.e)) {
-      this.switchChoice = "straight";
-      this.showMessage("Zwrotnica ustawiona: PROSTO", 650, "#f4d35e");
+      this.setSwitchChoice("straight");
     }
     if (!this.doorsOpen) {
       if (accelerate) this.throttle += 0.75 * dt;
@@ -923,14 +964,29 @@ class GameScene extends Phaser.Scene {
 
     if (this.bellCooldown > 0) this.bellCooldown -= dt;
     if (Phaser.Input.Keyboard.JustDown(this.keys.space)) {
-      const stop = this.activeStop();
-      if (stop && Math.abs(this.distance - stop.distance) < 138 && this.speed < 11) {
-        this.toggleDoors(stop);
-      } else if (stop && Math.abs(this.distance - stop.distance) < 138) {
-        this.showMessage("Za szybko na otwarcie drzwi", 900, "#ffb22e");
-      } else {
-        this.ringBell();
-      }
+      this.useActionButton();
+    }
+  }
+
+  togglePause() {
+    if (this.finished) return;
+    this.paused = !this.paused;
+    this.pauseLayer.setVisible(this.paused);
+  }
+
+  setSwitchChoice(choice) {
+    this.switchChoice = choice;
+    this.showMessage(choice === "left" ? "Zwrotnica ustawiona: SKRET" : "Zwrotnica ustawiona: PROSTO", 650, "#f4d35e");
+  }
+
+  useActionButton() {
+    const stop = this.activeStop();
+    if (stop && Math.abs(this.distance - stop.distance) < 138 && this.speed < 11) {
+      this.toggleDoors(stop);
+    } else if (stop && Math.abs(this.distance - stop.distance) < 138) {
+      this.showMessage("Za szybko na otwarcie drzwi", 900, "#ffb22e");
+    } else {
+      this.ringBell();
     }
   }
 

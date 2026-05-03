@@ -1,6 +1,8 @@
 const fs = require("fs");
 
 const source = fs.readFileSync("src/main.js", "utf8");
+const html = fs.readFileSync("index.html", "utf8");
+const css = fs.readFileSync("src/styles.css", "utf8");
 const failures = [];
 const warnings = [];
 
@@ -14,6 +16,14 @@ function warn(message) {
 
 function expectSource(pattern, message) {
   if (!pattern.test(source)) fail(message);
+}
+
+function expectHtml(pattern, message) {
+  if (!pattern.test(html)) fail(message);
+}
+
+function expectCss(pattern, message) {
+  if (!pattern.test(css)) fail(message);
 }
 
 for (const match of source.matchAll(/this\.load\.image\("([^"]+)", "([^"]+)"\)/g)) {
@@ -141,6 +151,12 @@ expectSource(/landmark-znicze", distance: Math\.round\(0\.02 \* ROUTE_SCALE\)/, 
 expectSource(/landmark-drzewo/, "Route should include the Widzew Wschod Drzewo sculpture landmark");
 expectSource(/landmark-smolarek-mural/, "Route should include a generated Widzew football mural landmark");
 expectSource(/landmark-witcher-mural/, "Route should include a generated Centrum tower mural landmark");
+expectSource(/createTouchControls\(/, "Mobile version should expose on-screen touch controls");
+expectSource(/touchState\.accelerate/, "Touch controls should drive acceleration");
+expectSource(/touchState\.brake/, "Touch controls should drive braking");
+expectSource(/useActionButton\(/, "Door and bell action should be shared by keyboard and touch controls");
+expectHtml(/user-scalable=no/, "Mobile viewport should prevent accidental zoom during play");
+expectCss(/touch-action:\s*none/, "Mobile CSS should prevent browser gestures from stealing gameplay input");
 
 if (/this\.smoothness\s*-=/g.test(source)) {
   fail("Smoothness must not be permanently decremented; use addRidePenalty/updateRideComfort");

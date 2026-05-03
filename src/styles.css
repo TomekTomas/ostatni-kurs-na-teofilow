@@ -22,9 +22,16 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+  width: 100%;
+  height: 100%;
   background: #121318;
   color: #f4efe4;
   font-family: "Lexend Deca", "Segoe UI", Arial, sans-serif;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 body {
@@ -46,12 +53,37 @@ body {
 #game {
   width: min(100vw, 1280px);
   height: min(100vh, 720px);
+  max-width: 100dvw;
+  max-height: 100dvh;
   border: 1px solid rgba(244, 239, 228, 0.16);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
   background: #10131a;
+  touch-action: none;
 }
 
 canvas {
   display: block;
+  width: 100%;
+  height: 100%;
   image-rendering: pixelated;
+  touch-action: none;
+}
+
+@media (orientation: portrait) and (max-width: 900px) {
+  #app::after {
+    content: "Obroc telefon poziomo";
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 10;
+    padding: 10px 14px;
+    border: 2px solid rgba(244, 211, 94, 0.9);
+    background: rgba(12, 17, 22, 0.9);
+    color: #f4d35e;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 0;
+    pointer-events: none;
+  }
 }
