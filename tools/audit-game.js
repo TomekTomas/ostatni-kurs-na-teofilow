@@ -87,7 +87,8 @@ for (const file of [
   "assets/fonts/lexend-deca-900.woff2",
   "assets/audio/README.md",
   "assets/audio/konstal_ride_loop.ogg",
-  "assets/audio/pesa_ride_loop.ogg"
+  "assets/audio/pesa_ride_loop.ogg",
+  "assets/generated/stajnia-jednorozcow-stop.png"
 ]) {
   if (!fs.existsSync(file)) fail(`Missing LCN branding asset: ${file}`);
 }
@@ -126,7 +127,8 @@ expectSource(/const wireY = 414/, "Catenary contact wire should be lowered near 
 expectSource(/shelterKey === "station" \? 0\.48/, "Station shelters should stay scaled below tram height");
 expectSource(/setScale\(isUnicornStop \? 0\.92 : 0\.82, isUnicornStop \? 0\.86 : 0\.82\)/, "Stop name cards should be scaled down to match the shelter, with a larger Stajnia variant");
 expectSource(/isUnicornStop = stop\.id === "piotrkowska"/, "Piotrkowska Centrum should use a dedicated Stajnia Jednorozcow stop object");
-expectSource(/shelterKey = isUnicornStop \? "unicorn"/, "Stajnia Jednorozcow should render as a special generated unicorn station asset");
+expectSource(/this\.load\.image\("station-unicorn", "assets\/generated\/stajnia-jednorozcow-stop\.png"\)/, "Stajnia Jednorozcow should be loaded from a dedicated generated bitmap asset");
+expectSource(/shelterKey = isUnicornStop \? "station-unicorn"/, "Stajnia Jednorozcow should render as a special generated station asset");
 expectSource(/const GAME_MODES = \{/, "Game should expose configurable modes");
 expectSource(/makeModeButton\(/, "Menu should allow choosing a game mode");
 expectSource(/addResultBars\(/, "Results screen should show visual rating bars");

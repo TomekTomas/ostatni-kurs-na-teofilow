@@ -420,6 +420,7 @@ class BootScene extends Phaser.Scene {
     this.load.image("station-long", "assets/sprites/station-shelter-long.png");
     this.load.image("station-board", "assets/sprites/station-shelter-board.png");
     this.load.image("station-pole-bench", "assets/sprites/station-pole-bench.png");
+    this.load.image("station-unicorn", "assets/generated/stajnia-jednorozcow-stop.png");
     this.load.image("lcn-logo-menu", "assets/branding/lcn-logo-menu.png");
     this.load.image("lcn-billboard-generated", "assets/branding/lcn-billboard-generated.png");
     this.load.image("lcn-billboard-1", "assets/branding/lcn-billboard-1.png");
@@ -793,10 +794,10 @@ class GameScene extends Phaser.Scene {
       const zone = this.add.rectangle(this.screenX(stop.distance), TRAM_BASE_Y + 18, zoneWidth, 58, 0xf4d35e, 0.09)
         .setStrokeStyle(2, 0xf4d35e, 0.62)
         .setVisible(false);
-      const shelterKey = isUnicornStop ? "unicorn" : STATION_KEYS[(stop.id.length + stop.name.length) % STATION_KEYS.length];
-      const shelterScale = isUnicornStop ? 0.72 : shelterKey === "station" ? 0.48 : shelterKey === "station-long" ? 0.45 : 0.43;
-      const shelterOffsetX = isUnicornStop ? 128 : 106;
-      const shelterY = isUnicornStop ? 526 : 540;
+      const shelterKey = isUnicornStop ? "station-unicorn" : STATION_KEYS[(stop.id.length + stop.name.length) % STATION_KEYS.length];
+      const shelterScale = isUnicornStop ? 0.52 : shelterKey === "station" ? 0.48 : shelterKey === "station-long" ? 0.45 : 0.43;
+      const shelterOffsetX = isUnicornStop ? 146 : 106;
+      const shelterY = isUnicornStop ? 532 : 540;
       const shelter = this.add.image(this.screenX(stop.distance) + shelterOffsetX, shelterY, shelterKey).setScale(shelterScale).setAlpha(0.95).setDepth(12).setVisible(false);
       const cardOffsetX = isUnicornStop ? -190 : -118;
       const labelOffsetX = cardOffsetX + 16;
