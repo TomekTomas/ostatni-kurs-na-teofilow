@@ -252,6 +252,91 @@ const BG_LABELS = {
   teofilow: "Teofilow"
 };
 
+const DISTRICT_PROFILES = {
+  zarzew: {
+    traffic: 0.82,
+    pedestrians: 0.95,
+    windows: 0.38,
+    tint: 0xc7d0d0,
+    dispatch: [
+      "Dyspozytor: wyjazd z Zarzewa, uwaga na pieszych przy cmentarzu.",
+      "Dyspozytor: pierwszy odcinek spokojnie, zbierz rytm jazdy."
+    ]
+  },
+  "widzew-wschod": {
+    traffic: 1.18,
+    pedestrians: 1.25,
+    windows: 0.62,
+    tint: 0xdbe8f0,
+    dispatch: [
+      "Dyspozytor: Widzew Wschod, wiecej pieszych przy przejsciach.",
+      "Dyspozytor: osiedle przed Toba, pilnuj hamowania przed przystankami."
+    ]
+  },
+  rokicinska: {
+    traffic: 1.05,
+    pedestrians: 0.95,
+    windows: 0.5,
+    tint: 0xd6e0da,
+    dispatch: ["Dyspozytor: Rokicinska czysta, ale uwazaj na torowisko po prawej."]
+  },
+  widzew: {
+    traffic: 1.35,
+    pedestrians: 1.45,
+    windows: 0.7,
+    tint: 0xf0ded2,
+    dispatch: [
+      "Dyspozytor: okolice stadionu, spodziewaj sie wiekszego ruchu.",
+      "Dyspozytor: nie gon rozkladu przez stadion, czerwone dalej kosztuje."
+    ]
+  },
+  wima: {
+    traffic: 1.04,
+    pedestrians: 1.05,
+    windows: 0.54,
+    tint: 0xe0d4c5,
+    dispatch: ["Dyspozytor: Wi-Ma i stare torowisko, jedz plynnie na nastawniku."]
+  },
+  centrum: {
+    traffic: 1.52,
+    pedestrians: 1.55,
+    windows: 0.92,
+    tint: 0xf1e2c5,
+    dispatch: [
+      "Dyspozytor: centrum, korki i piesi, trzymaj oczy na sygnalach.",
+      "Dyspozytor: Piotrkowska blisko, punktualnosc wazna, ale bez szarpania."
+    ]
+  },
+  piotrkowska: {
+    traffic: 1.42,
+    pedestrians: 1.7,
+    windows: 1,
+    tint: 0xf4d35e,
+    dispatch: ["Dyspozytor: przesiadkowe centrum, postaraj sie o czysty stop."]
+  },
+  kaliska: {
+    traffic: 1.28,
+    pedestrians: 1.25,
+    windows: 0.74,
+    tint: 0xd8e2e8,
+    dispatch: ["Dyspozytor: przed Kaliska pamietaj o skrecie we Wlokniarzy."]
+  },
+  wlokniarzy: {
+    traffic: 1.2,
+    pedestrians: 1,
+    windows: 0.56,
+    tint: 0xd8d6ca,
+    dispatch: ["Dyspozytor: Wlokniarzy dlugi przelot, trzymaj tempo i nie przestrzel przystanku."]
+  },
+  teofilow: {
+    traffic: 0.75,
+    pedestrians: 0.7,
+    windows: 0.46,
+    tint: 0xd2dbe5,
+    dispatch: ["Dyspozytor: Teofilow coraz blizej, dowiez sklad do konca."]
+  }
+};
+
 const SURFACE_PALETTES = {
   zarzew: { sidewalk: 0x6b7479, street: 0x242b31, laneBack: 0x2d363d, laneFront: 0x1f262c, platform: 0x444a46, curb: 0xc4c1ad, tint: 0xb9c5b8 },
   "widzew-wschod": { sidewalk: 0x718190, street: 0x26313a, laneBack: 0x304050, laneFront: 0x202a32, platform: 0x465765, curb: 0xd0d8d2, tint: 0xc8d7e0 },
@@ -574,9 +659,16 @@ class GameScene extends Phaser.Scene {
     this.stopRating = "-";
     this.stopStreak = 0;
     this.currentBg = "zarzew";
+    this.districtProfile = DISTRICT_PROFILES.zarzew;
+    this.districtTraffic = this.districtProfile.traffic;
+    this.districtPedestrians = this.districtProfile.pedestrians;
     this.paused = false;
     this.finishBonusApplied = false;
     this.lastBgMessage = "zarzew";
+    this.dispatchUntil = 0;
+    this.nextDispatchAt = 1400;
+    this.lastDispatchText = "";
+    this.feedbackReasons = [];
     this.switchChoice = "straight";
     this.switchPenaltyUntil = 0;
     this.tutorialShown = {};
@@ -687,6 +779,7 @@ class GameScene extends Phaser.Scene {
     this.catenary = this.makeCatenary();
     this.streetProps = this.makeStreetProps();
     this.streetLights = this.makeStreetLights();
+    this.cityLife = this.makeCityLifeEffects();
     this.lcnBillboards = this.makeLcnBillboards();
     this.lodzDetails = this.makeLodzDetails();
   }
@@ -822,6 +915,17 @@ class GameScene extends Phaser.Scene {
     this.modeBadgeBg = this.add.rectangle(16, 210, 410, 62, 0x0f1419, 0.86).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.9);
     this.modeBadgeText = this.add.text(34, 220, "", { fontSize: "11px", color: "#f4efe4", fontStyle: "700", lineSpacing: 1, wordWrap: { width: 374, useAdvancedWrap: true } });
     this.nextSwitchText = this.add.text(34, 246, "", { fontSize: "10px", color: "#ffb22e", fontStyle: "700", wordWrap: { width: 374, useAdvancedWrap: true } });
+    this.feedbackBg = this.add.rectangle(16, 280, 410, 54, 0x0f1419, 0.78).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.7);
+    this.feedbackText = this.add.text(34, 290, "Feedback: czysta jazda", { fontSize: "10px", color: "#8ea0a8", fontStyle: "700", lineSpacing: 1, wordWrap: { width: 374, useAdvancedWrap: true } });
+
+    this.dispatchBg = this.add.rectangle(WIDTH - 430, 102, 408, 58, 0x0c1116, 0.86).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.85);
+    this.dispatchText = this.add.text(WIDTH - 410, 112, "Dyspozytor: lacznosc gotowa", {
+      fontSize: "11px",
+      color: "#f4efe4",
+      fontStyle: "700",
+      lineSpacing: 1,
+      wordWrap: { width: 360, useAdvancedWrap: true }
+    });
 
     this.add.image(180, 672, "mini-map-panel").setOrigin(0).setScale(1, 0.86).setAlpha(0.94);
     this.routeLabel = this.add.text(200, 680, "Linia 8: Zarzew -> Teofilow", { fontSize: "12px", color: "#d9d3c4", fontStyle: "700" });
@@ -1034,7 +1138,7 @@ class GameScene extends Phaser.Scene {
     const throttleRate = Math.abs(this.throttle - this.lastThrottle) / Math.max(dt, 0.016);
     this.inputJerk = Math.max(0, throttleRate - 0.95);
     if (this.inputJerk > 0) {
-      this.adjustSatisfaction(-this.inputJerk * dt * (2.8 / this.vehicle.comfort));
+      this.adjustSatisfaction(-this.inputJerk * dt * (2.8 / this.vehicle.comfort), "szarpniecie nastawnikiem");
     }
     this.lastThrottle = this.throttle;
 
@@ -1127,6 +1231,7 @@ class GameScene extends Phaser.Scene {
     if (this.speed > safeSpeed) {
       this.dangerTime += dt;
       this.cameras.main.shake(35, 0.0026 * this.vehicle.shake);
+      this.addFeedback("za szybko na aktualnym torowisku", "#ff5c8a");
       this.showMessage("ZA SZYBKO NA TYCH TORACH!", 220, "#ff5c8a");
       if (this.dangerTime > 2.15) this.gameOver("Wykolejenie na krzywym torowisku");
     } else {
@@ -1154,16 +1259,25 @@ class GameScene extends Phaser.Scene {
 
     const discomfort = Math.max(0, 72 - this.smoothness) * 0.012;
     const steadyRideBonus = this.smoothness > 88 && this.speed > 12 ? 0.035 : 0;
-    this.adjustSatisfaction((steadyRideBonus - 0.045 - discomfort) * dt);
+    this.adjustSatisfaction((steadyRideBonus - 0.045 - discomfort) * dt, discomfort > 0.08 ? "pasazerowie czuja szarpanie" : "");
   }
 
-  addRidePenalty(amount) {
+  addRidePenalty(amount, reason = "") {
     this.rideEventPenalty = Phaser.Math.Clamp(this.rideEventPenalty + (amount * this.mode.eventPressure) / this.vehicle.comfort, 0, 70);
+    if (reason) this.addFeedback(reason, "#ffb22e");
   }
 
-  adjustSatisfaction(delta) {
+  adjustSatisfaction(delta, reason = "") {
     const scaledDelta = delta < 0 ? delta * this.mode.eventPressure : delta;
     this.satisfaction = Phaser.Math.Clamp(this.satisfaction + scaledDelta, 0, 100);
+    if (scaledDelta < -0.18 && reason) this.addFeedback(reason, "#ffb22e");
+  }
+
+  addFeedback(text, color = "#ffb22e") {
+    const now = this.time?.now || 0;
+    if (this.feedbackReasons[0]?.text === text && now - this.feedbackReasons[0].time < 900) return;
+    this.feedbackReasons.unshift({ text, color, time: now });
+    this.feedbackReasons = this.feedbackReasons.slice(0, 3);
   }
 
   updateStations(dt) {
@@ -1178,8 +1292,8 @@ class GameScene extends Phaser.Scene {
     if (delta > 0 && delta < 720 && !stop.served) {
       const recommended = this.recommendedStopSpeed(delta);
       if (this.speed > recommended + 34) {
-        this.adjustSatisfaction(-dt * 0.55);
-        this.addRidePenalty(dt * 1.4);
+        this.adjustSatisfaction(-dt * 0.55, "za szybki dojazd do przystanku");
+        this.addRidePenalty(dt * 1.4, "hamowanie awaryjne przed peronem");
         this.showMessage(`Hamuj do ${Math.round(this.toDisplaySpeed(recommended))} km/h przed ${stop.name}`, 260, "#ffb22e");
       }
     }
@@ -1191,8 +1305,8 @@ class GameScene extends Phaser.Scene {
     }
 
     if (!stop.served && this.distance > stop.distance + 210) {
-      this.adjustSatisfaction(-16);
-      this.addRidePenalty(7);
+      this.adjustSatisfaction(-16, "pominiety przystanek");
+      this.addRidePenalty(7, "pominiety przystanek");
       this.score -= 160;
       this.combo = 1;
       this.stopStreak = 0;
@@ -1260,6 +1374,7 @@ class GameScene extends Phaser.Scene {
     this.speed = 0;
     this.throttle = 0;
     this.score += 40;
+    this.addFeedback("dobry postoj: wymiana pasazerow", "#50d2c2");
     this.showMessage("DRZWI OTWARTE - wymiana pasazerow", 900, "#50d2c2");
     this.playCue("doors");
     this.animateDoors(true);
@@ -1331,8 +1446,8 @@ class GameScene extends Phaser.Scene {
     }
     const penalty = Phaser.Math.Clamp((abs - 18) * 0.08, 1, 9);
     this.punctuality = Phaser.Math.Clamp(this.punctuality - penalty, 0, 100);
-    this.adjustSatisfaction(-penalty * 0.42);
-    this.addRidePenalty(penalty * 0.35);
+    this.adjustSatisfaction(-penalty * 0.42, delta < 0 ? "odjazd za wczesnie" : "spoznienie wzgledem rozkladu");
+    this.addRidePenalty(penalty * 0.35, "rozklad poza tolerancja");
     if (delta < 0) this.stats.earlyStops += 1;
     else this.stats.lateStops += 1;
     return -Math.round(penalty * 18);
@@ -1361,8 +1476,8 @@ class GameScene extends Phaser.Scene {
         this.stats.potholes += 1;
         const hard = this.speed > this.vehicle.maxSpeed * 0.46;
         this.speed *= hard ? 0.76 : 0.9;
-        this.adjustSatisfaction(hard ? -11 : -3.5);
-        this.addRidePenalty(hard ? 26 : 8);
+        this.adjustSatisfaction(hard ? -11 : -3.5, hard ? "dziura przejechana za szybko" : "dziura w torowisku");
+        this.addRidePenalty(hard ? 26 : 8, hard ? "mocne uderzenie na dziurze" : "nierowny przejazd");
         this.cameras.main.shake(hard ? 320 : 140, hard ? 0.012 : 0.005);
         this.playCue(hard ? "bad" : "neutral");
         this.showMessage(hard ? "DZIURA! Pasazerowie polecieli z siedzen" : "Dziura przejechana ostroznie", 1200, hard ? "#ff5c8a" : "#f4d35e");
@@ -1374,8 +1489,8 @@ class GameScene extends Phaser.Scene {
         this.trackCondition = Math.min(this.trackCondition, 0.42);
         this.nextConditionAt = Math.max(this.nextConditionAt, this.distance + 520);
         const roughFast = this.speed > this.vehicle.maxSpeed * 0.38;
-        this.adjustSatisfaction(roughFast ? -6 : -1.5);
-        this.addRidePenalty(roughFast ? 18 : 5);
+        this.adjustSatisfaction(roughFast ? -6 : -1.5, roughFast ? "za szybko na odcinku remontowym" : "krzywe torowisko");
+        this.addRidePenalty(roughFast ? 18 : 5, "nierowny odcinek torowiska");
         this.playCue(roughFast ? "bad" : "neutral");
         this.showMessage("Odcinek remontowy: trzymaj spokojny nastawnik", 1500, "#ffb22e");
       }
@@ -1384,8 +1499,8 @@ class GameScene extends Phaser.Scene {
         event.cleared = true;
         this.stats.powerLosses += 1;
         this.powerTimer = 2.8;
-        this.adjustSatisfaction(-3);
-        this.addRidePenalty(4);
+        this.adjustSatisfaction(-3, "zanik napiecia");
+        this.addRidePenalty(4, "utrata zasilania");
         this.playCue("power");
         this.showMessage("ZANIK NAPIECIA - tracisz ped", 1600, "#ffb22e");
       }
@@ -1396,7 +1511,7 @@ class GameScene extends Phaser.Scene {
     if (this.bellCooldown > 0) return;
     this.bellCooldown = 1.2;
     this.timeLeft -= 1.2;
-    this.adjustSatisfaction(-0.8);
+    this.adjustSatisfaction(-0.8, cleared ? "" : "niepotrzebny dzwonek");
     this.stats.bells += 1;
     this.playCue("bell");
     let cleared = false;
@@ -1459,8 +1574,8 @@ class GameScene extends Phaser.Scene {
           this.stats.switchWrong += 1;
           this.score -= 520;
           this.timeLeft -= 12;
-          this.adjustSatisfaction(-10);
-          this.addRidePenalty(18);
+          this.adjustSatisfaction(-10, "zle ustawiona zwrotnica");
+          this.addRidePenalty(18, "blad zwrotnicy");
           this.speed *= 0.54;
           this.combo = 1;
           this.switchPenaltyUntil = this.time.now + 1800;
@@ -1492,8 +1607,8 @@ class GameScene extends Phaser.Scene {
         light.penalized = true;
         this.stats.redSignals += 1;
         this.score -= 140;
-        this.adjustSatisfaction(-7);
-        this.addRidePenalty(8);
+        this.adjustSatisfaction(-7, "przejazd na czerwonym");
+        this.addRidePenalty(8, "czerwone swiatlo");
         this.signalPenaltyUntil = this.time.now + 1200;
         this.playCue("bad");
         this.showMessage("Przelot na czerwonym!", 1200, "#ff5c8a");
@@ -1545,6 +1660,8 @@ class GameScene extends Phaser.Scene {
     this.updateCatenary();
     this.updateStreetProps();
     this.updateStreetLights();
+    this.updateCityLifeEffects(dt);
+    this.updateDispatcher(dt);
     this.updateNightLayer(dt);
     this.updateLcnBillboards();
     this.updateLodzDetails();
@@ -1620,7 +1737,7 @@ class GameScene extends Phaser.Scene {
   updateTrafficCars(dt) {
     const relativeScroll = this.speed * dt * 0.08;
     this.trafficCars.forEach((car) => {
-      car.x += car.direction * car.screenSpeed * dt - relativeScroll * car.parallax;
+      car.x += car.direction * car.screenSpeed * this.districtTraffic * dt - relativeScroll * car.parallax;
       if (car.direction < 0 && car.x < -car.resetMargin) {
         car.x = WIDTH + car.resetMargin + Phaser.Math.Between(0, car.resetJitter);
       } else if (car.direction > 0 && car.x > WIDTH + car.resetMargin) {
@@ -1628,6 +1745,7 @@ class GameScene extends Phaser.Scene {
       }
       car.y = car.baseY + Math.sin(this.time.now * 0.0023 + car.wobble) * 0.45;
       car.flipX = car.facing === "left";
+      car.setAlpha(Phaser.Math.Clamp(0.5 + this.districtTraffic * 0.28, 0.58, 0.96));
       car.setVisible(car.x > -300 && car.x < WIDTH + 300);
     });
   }
@@ -1700,7 +1818,7 @@ class GameScene extends Phaser.Scene {
 
   updatePedestrians(dt) {
     this.pedestrians.forEach((p, index) => {
-      p.x += p.direction * p.screenSpeed * dt;
+      p.x += p.direction * p.screenSpeed * this.districtPedestrians * dt;
       if (p.direction < 0 && p.x < -p.resetMargin) {
         p.x = WIDTH + p.resetMargin + Phaser.Math.Between(0, p.resetJitter);
       } else if (p.direction > 0 && p.x > WIDTH + p.resetMargin) {
@@ -1708,8 +1826,87 @@ class GameScene extends Phaser.Scene {
       }
       p.y = p.baseY + Math.sin(this.time.now * 0.006 + index) * 2;
       p.flipX = p.direction < 0;
+      p.setAlpha(Phaser.Math.Clamp(0.42 + this.districtPedestrians * 0.22, 0.5, 0.88));
       p.setVisible(p.x > -160 && p.x < WIDTH + 160);
     });
+  }
+
+  makeCityLifeEffects() {
+    const layer = this.add.container(0, 0).setDepth(9);
+    const windows = Array.from({ length: 34 }, (_, index) => {
+      const x = 50 + (index % 17) * Math.max(62, WIDTH / 18);
+      const y = 142 + Math.floor(index / 17) * 74 + (index % 3) * 8;
+      const window = this.add.rectangle(x, y, 12, 7, 0xf4d35e, 0.08).setOrigin(0.5);
+      window.twinkle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      window.drift = Phaser.Math.FloatBetween(0.02, 0.08);
+      layer.add(window);
+      return window;
+    });
+    const steam = Array.from({ length: 5 }, (_, index) => {
+      const puff = this.add.ellipse(180 + index * 220, 318 + (index % 2) * 20, 28, 10, 0xd9d3c4, 0.08).setOrigin(0.5);
+      puff.seed = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      layer.add(puff);
+      return puff;
+    });
+    const crossingPulse = this.add.rectangle(WIDTH / 2, 492, WIDTH, 3, 0xf4d35e, 0.08).setOrigin(0.5);
+    layer.add(crossingPulse);
+    return { layer, windows, steam, crossingPulse };
+  }
+
+  updateCityLifeEffects(dt) {
+    if (!this.cityLife) return;
+    const profile = this.districtProfile || DISTRICT_PROFILES.zarzew;
+    this.cityLife.windows.forEach((window, index) => {
+      window.x -= this.speed * dt * window.drift;
+      if (window.x < -20) window.x = WIDTH + Phaser.Math.Between(10, 90);
+      const nightBoost = this.mode.night ? 0.36 : 0.04;
+      const cityGlow = profile.windows * 0.16;
+      const twinkle = Math.sin(this.time.now * 0.002 + window.twinkle + index) * 0.06;
+      window.setFillStyle(profile.tint || 0xf4d35e, Phaser.Math.Clamp(nightBoost + cityGlow + twinkle, 0.03, 0.72));
+    });
+    this.cityLife.steam.forEach((puff, index) => {
+      puff.x -= this.speed * dt * 0.045;
+      if (puff.x < -40) puff.x = WIDTH + 180 + index * 20;
+      puff.y = 314 + Math.sin(this.time.now * 0.0018 + puff.seed) * 18 - index * 3;
+      puff.scaleX = 1 + Math.sin(this.time.now * 0.0012 + index) * 0.22;
+      puff.setAlpha((this.currentBg === "wima" || this.currentBg === "centrum") ? 0.12 : 0.035);
+    });
+    const activeStop = this.activeStop();
+    const nearStop = activeStop && activeStop.distance - this.distance < 620 && activeStop.distance - this.distance > -100;
+    this.cityLife.crossingPulse.setAlpha(nearStop ? 0.08 + Math.sin(this.time.now * 0.008) * 0.04 : 0.02);
+  }
+
+  updateDispatcher(dt) {
+    if (!this.dispatchText) return;
+    if (this.time.now > this.dispatchUntil && this.time.now > this.nextDispatchAt) {
+      const next = this.activeStop();
+      const nextSignal = this.nextRelevantSignal();
+      const nextSwitch = this.nextRelevantSwitch();
+      let text = "";
+      if (nextSwitch && nextSwitch.distance - this.distance < 1200) {
+        text = `Dyspozytor: zwrotnica za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}, ${nextSwitch.correct === "left" ? "szykuj skret" : "trzymaj prosto"}.`;
+      } else if (nextSignal && nextSignal.state === "red" && nextSignal.distance - this.distance < 900) {
+        text = "Dyspozytor: czerwone przed Toba, nie oddawaj punktow na sygnale.";
+      } else if (next && next.distance - this.distance < 900) {
+        text = `Dyspozytor: nastepny ${next.name}, zacznij schodzic z predkosci.`;
+      } else {
+        const lines = (this.districtProfile || DISTRICT_PROFILES.zarzew).dispatch;
+        text = lines[Phaser.Math.Between(0, lines.length - 1)];
+      }
+      this.dispatch(text, 4700);
+      this.nextDispatchAt = this.time.now + Phaser.Math.Between(7000, 10500);
+    }
+    const active = this.time.now < this.dispatchUntil;
+    this.dispatchBg.setAlpha(active ? 0.9 : 0.48);
+    this.dispatchText.setAlpha(active ? 1 : 0.58);
+  }
+
+  dispatch(text, duration = 4300) {
+    if (!text || text === this.lastDispatchText) return;
+    this.lastDispatchText = text;
+    this.dispatchText.setText(text);
+    this.fitText(this.dispatchText, 360, 11, 8);
+    this.dispatchUntil = this.time.now + duration;
   }
 
   makeCatenary() {
@@ -1988,6 +2185,11 @@ class GameScene extends Phaser.Scene {
     this.brakeText.setText(recommended === null ? `${switchText} | Rating ${this.stopRating}` : `Hamuj do ${Math.round(this.toDisplaySpeed(recommended))} km/h | ${switchText}`);
     this.modeBadgeText.setText(`${this.mode.label}\nTor ${Math.round(this.mode.trackMin * 100)}-${Math.round(this.mode.trackMax * 100)}% | Ruch x${this.mode.traffic.toFixed(2)}`);
     this.nextSwitchText.setText(nextSwitch ? `Zwrotnica za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}: ${nextSwitch.correct === "left" ? "Q SKRET" : "E PROSTO"}` : "Zwrotnice: brak blisko");
+    const recentFeedback = this.feedbackReasons
+      .filter((item) => this.time.now - item.time < 5200)
+      .slice(0, 2);
+    this.feedbackText.setText(recentFeedback.length ? `Feedback:\n${recentFeedback.map((item) => item.text).join("\n")}` : "Feedback: czysta jazda");
+    this.feedbackText.setColor(recentFeedback[0]?.color || "#8ea0a8");
     this.fitText(this.nextText, 354, 11, 8);
     this.fitText(this.signalText, 354, 10, 8);
     this.fitText(this.scheduleText, 354, 10, 8);
@@ -1997,6 +2199,7 @@ class GameScene extends Phaser.Scene {
     this.fitText(this.brakeText, 390, 12, 10);
     this.fitText(this.modeBadgeText, 374, 11, 9);
     this.fitText(this.nextSwitchText, 374, 10, 8);
+    this.fitText(this.feedbackText, 374, 10, 8);
     this.throttleFill.width = 140 * this.throttle;
     this.condFill.width = 140 * this.trackCondition;
     this.condFill.setFillStyle(this.trackCondition < 0.5 ? 0xff5c8a : 0x50d2c2);
@@ -2064,10 +2267,15 @@ class GameScene extends Phaser.Scene {
     if (bg === this.currentBg) return;
 
     this.currentBg = bg;
+    this.districtProfile = DISTRICT_PROFILES[bg] || DISTRICT_PROFILES.zarzew;
+    this.districtTraffic = this.districtProfile.traffic;
+    this.districtPedestrians = this.districtProfile.pedestrians;
     this.applySurfacePalette(bg);
     if (this.lastBgMessage !== bg) {
       this.lastBgMessage = bg;
       this.showMessage(`Segment: ${BG_LABELS[bg] || bg}`, 1400, "#f4efe4");
+      const lines = this.districtProfile.dispatch || [];
+      if (lines.length) this.dispatch(lines[0], 5200);
     }
     this.bgB.setTexture(`bg-${bg}`);
     this.bgB.tilePositionX = this.bgA.tilePositionX;

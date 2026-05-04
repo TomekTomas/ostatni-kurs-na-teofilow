@@ -163,6 +163,13 @@ expectSource(/updateTutorial\(/, "Tutorial prompts should be triggered by route 
 expectSource(/showTutorial\(/, "Tutorial prompts should be one-shot and non-spammy");
 expectSource(/writeRunHistory\(/, "End screen should persist a recent run history");
 expectSource(/addHistoryPanel\(/, "End screen should render recent runs for replay motivation");
+expectSource(/DISTRICT_PROFILES/, "District profiles should alter city feel along the route");
+expectSource(/updateDispatcher\(/, "Dispatcher radio should provide live contextual guidance");
+expectSource(/dispatchText/, "Dispatcher messages should have a dedicated HUD panel");
+expectSource(/makeCityLifeEffects\(/, "City should include animated life beyond static backgrounds");
+expectSource(/updateCityLifeEffects\(/, "Animated city details should update with route speed and district");
+expectSource(/feedbackReasons/, "HUD should explain recent comfort and smoothness penalties");
+expectSource(/addFeedback\(/, "Gameplay penalties should produce readable player feedback");
 expectSource(/BASE_WIDTH/, "Game should keep a base 16:9 width for desktop layouts");
 expectSource(/visualViewport/, "Mobile landscape should expand the logical game width to match wide phone screens");
 expectSource(/orientationchange/, "Mobile orientation changes should rebuild the Phaser canvas with the correct aspect ratio");
