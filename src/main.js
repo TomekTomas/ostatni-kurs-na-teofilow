@@ -434,6 +434,8 @@ class BootScene extends Phaser.Scene {
     this.load.image("landmark-drzewo", "assets/generated/landmark-drzewo.png");
     this.load.image("landmark-smolarek-mural", "assets/generated/landmark-smolarek-mural.png");
     this.load.image("landmark-witcher-mural", "assets/generated/landmark-witcher-mural.png");
+    this.load.image("landmark-widzew-fans", "assets/generated/widzew-fans-bg.png");
+    this.load.image("landmark-unicorn-statue", "assets/generated/landmark-unicorn-statue.png");
     this.load.image("arrow-left", "assets/sprites-ai/arrow-left.png");
     this.load.image("arrow-right", "assets/sprites-ai/arrow-right.png");
     this.load.audio("ride-konstal", "assets/audio/konstal_ride_loop.ogg");
@@ -724,6 +726,7 @@ class GameScene extends Phaser.Scene {
     this.laneA = this.add.tileSprite(0, 584, WIDTH, 6, "track").setOrigin(0).setScale(1, 0.06).setAlpha(0.18);
     this.roadStripeB = this.add.tileSprite(0, 626, WIDTH, 6, "track").setOrigin(0).setScale(1, 0.06).setAlpha(0.16);
     this.curbFront = this.add.tileSprite(0, 630, WIDTH, 8, "plac").setOrigin(0).setScale(0.32, 0.06).setAlpha(0.38);
+    this.streetMarkings = this.makeStreetMarkings();
     this.track = this.add.tileSprite(0, TRACK_Y, WIDTH, 96, "track").setOrigin(0);
     this.platform = this.add.rectangle(0, 650, WIDTH, 70, 0x3f4448).setOrigin(0);
     this.platformCurb = this.add.rectangle(0, 648, WIDTH, 5, 0xc9d0ce, 0.8).setOrigin(0);
@@ -1663,6 +1666,7 @@ class GameScene extends Phaser.Scene {
     this.laneA.tilePositionX += scroll * 0.45;
     this.roadStripeB.tilePositionX += scroll * 0.4;
     this.curbFront.tilePositionX += scroll * 0.5;
+    this.updateStreetMarkings();
     this.updateRouteBackground();
 
     const speedRatio = Phaser.Math.Clamp(this.speed / this.vehicle.maxSpeed, 0, 1);
@@ -2014,8 +2018,10 @@ class GameScene extends Phaser.Scene {
     const defs = [
       { type: "landmark", key: "landmark-znicze", distance: Math.round(0.02 * ROUTE_SCALE), y: 532, scale: 0.26, depth: 13 },
       { type: "landmark", key: "landmark-drzewo", distance: Math.round(1.55 * ROUTE_SCALE), y: 534, scale: 0.26, depth: 13 },
+      { type: "landmark", key: "landmark-widzew-fans", distance: Math.round(3.32 * ROUTE_SCALE), y: 524, scale: 0.48, depth: 14, animated: true },
       { type: "landmark", key: "landmark-smolarek-mural", distance: Math.round(3.46 * ROUTE_SCALE), y: 536, scale: 0.32, depth: 10 },
       { type: "landmark", key: "landmark-witcher-mural", distance: Math.round(7.3 * ROUTE_SCALE), y: 536, scale: 0.31, depth: 10 },
+      { type: "landmark", key: "landmark-unicorn-statue", distance: Math.round(7.78 * ROUTE_SCALE), y: 530, scale: 0.36, depth: 13 },
       { type: "gate", offset: 2500, y: 492, label: "BRAMA" },
       { type: "generated", key: "lodz-detail-cafe", offset: 3380, y: 502, scale: 0.15 },
       { type: "generated", key: "lodz-detail-mural", offset: 4260, y: 496, scale: 0.16 },
@@ -2060,6 +2066,10 @@ class GameScene extends Phaser.Scene {
       group.spawnOffset = def.offset;
       group.fixed = Boolean(def.distance);
       group.kind = def.type;
+      group.detailKey = def.key;
+      group.animated = Boolean(def.animated);
+      group.baseY = 0;
+      group.bounceSeed = Phaser.Math.FloatBetween(0, Math.PI * 2);
       return group;
     });
   }
@@ -2071,7 +2081,36 @@ class GameScene extends Phaser.Scene {
         detail.worldDistance = this.distance + 6200 + detail.spawnOffset + index * 140;
       }
       detail.x = this.screenX(detail.worldDistance);
+      detail.y = detail.animated ? Math.sin(this.time.now * 0.012 + detail.bounceSeed) * 2.8 : detail.baseY;
       detail.setVisible(detail.x > -220 && detail.x < WIDTH + 220);
+    });
+  }
+
+  makeStreetMarkings() {
+    const crossingStops = ["widzew-stadion", "piotrkowska", "mickiewicza", "legionow", "lutomierska"];
+    const defs = crossingStops
+      .map((id) => STOPS.find((stop) => stop.id === id))
+      .filter(Boolean)
+      .map((stop) => ({ distance: stop.distance - 90, width: stop.id === "piotrkowska" ? 150 : 116 }));
+    return defs.map((def, index) => {
+      const group = this.add.container(this.screenX(def.distance), 0).setDepth(11);
+      for (let i = 0; i < 7; i++) {
+        group.add(this.add.rectangle(-def.width / 2 + i * 21, 585, 10, 88, 0xe9ece8, 0.68).setOrigin(0.5));
+      }
+      group.add(this.add.rectangle(0, 532, def.width + 34, 5, 0xf4efe4, 0.42).setOrigin(0.5));
+      group.add(this.add.rectangle(0, 631, def.width + 34, 5, 0xf4efe4, 0.36).setOrigin(0.5));
+      group.add(this.add.rectangle(0, 504, def.width + 58, 14, index % 2 ? 0x6a5f55 : 0x657783, 0.32).setOrigin(0.5));
+      group.worldDistance = def.distance;
+      group.markingIndex = index;
+      return group;
+    });
+  }
+
+  updateStreetMarkings() {
+    if (!this.streetMarkings) return;
+    this.streetMarkings.forEach((group) => {
+      group.x = this.screenX(group.worldDistance);
+      group.setVisible(group.x > -220 && group.x < WIDTH + 220);
     });
   }
 
@@ -2343,12 +2382,12 @@ class GameScene extends Phaser.Scene {
     this.roadFrontLane.setFillStyle(palette.laneFront, 0.94);
     this.platform.setFillStyle(palette.platform, 1);
     this.platformCurb.setFillStyle(palette.curb, 0.82);
-    this.sidewalkBackBand.setTint(palette.tint);
+    this.sidewalkBackBand.setTint(palette.tint).setAlpha(0.3);
     this.curbBack.setTint(palette.curb);
-    this.roadStripeA.setTint(palette.curb);
-    this.roadMedian.setTint(palette.tint);
-    this.laneA.setTint(palette.curb);
-    this.roadStripeB.setTint(palette.curb);
+    this.roadStripeA.setTint(palette.curb).setAlpha(0.24);
+    this.roadMedian.setTint(palette.tint).setAlpha(0.24);
+    this.laneA.setTint(palette.curb).setAlpha(0.26);
+    this.roadStripeB.setTint(palette.curb).setAlpha(0.22);
     this.curbFront.setTint(palette.curb);
     this.platformLines.setTint(palette.tint);
   }

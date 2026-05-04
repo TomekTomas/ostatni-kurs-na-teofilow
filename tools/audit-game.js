@@ -88,7 +88,9 @@ for (const file of [
   "assets/audio/README.md",
   "assets/audio/konstal_ride_loop.ogg",
   "assets/audio/pesa_ride_loop.ogg",
-  "assets/generated/stajnia-jednorozcow-stop.png"
+  "assets/generated/stajnia-jednorozcow-stop.png",
+  "assets/generated/widzew-fans-bg.png",
+  "assets/generated/landmark-unicorn-statue.png"
 ]) {
   if (!fs.existsSync(file)) fail(`Missing LCN branding asset: ${file}`);
 }
@@ -167,6 +169,10 @@ expectSource(/landmark-znicze", distance: Math\.round\(0\.02 \* ROUTE_SCALE\)/, 
 expectSource(/landmark-drzewo/, "Route should include the Widzew Wschod Drzewo sculpture landmark");
 expectSource(/landmark-smolarek-mural/, "Route should include a generated Widzew football mural landmark");
 expectSource(/landmark-witcher-mural/, "Route should include a generated Centrum tower mural landmark");
+expectSource(/landmark-widzew-fans/, "Widzew Stadion should include a background group of fans");
+expectSource(/landmark-unicorn-statue/, "Route should include the Unicorn statue before Piotrkowska Centrum");
+expectSource(/makeStreetMarkings\(/, "Route should include visible road markings and zebra crossings");
+expectSource(/updateStreetMarkings\(/, "Road markings should scroll with the route");
 expectSource(/createTouchControls\(/, "Mobile version should expose on-screen touch controls");
 expectSource(/touchState\.accelerate/, "Touch controls should drive acceleration");
 expectSource(/touchState\.brake/, "Touch controls should drive braking");
