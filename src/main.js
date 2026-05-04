@@ -917,6 +917,11 @@ class GameScene extends Phaser.Scene {
     this.nextSwitchText = this.add.text(34, 246, "", { fontSize: "10px", color: "#ffb22e", fontStyle: "700", wordWrap: { width: 374, useAdvancedWrap: true } });
     this.feedbackBg = this.add.rectangle(16, 280, 410, 54, 0x0f1419, 0.78).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.7);
     this.feedbackText = this.add.text(34, 290, "Feedback: czysta jazda", { fontSize: "10px", color: "#8ea0a8", fontStyle: "700", lineSpacing: 1, wordWrap: { width: 374, useAdvancedWrap: true } });
+    this.modeBadgeBg.setVisible(false);
+    this.modeBadgeText.setVisible(false);
+    this.nextSwitchText.setVisible(false);
+    this.feedbackBg.setVisible(false);
+    this.feedbackText.setVisible(false);
 
     this.dispatchBg = this.add.rectangle(WIDTH - 430, 102, 408, 58, 0x0c1116, 0.86).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.85);
     this.dispatchText = this.add.text(WIDTH - 410, 112, "Dyspozytor: lacznosc gotowa", {
@@ -926,6 +931,8 @@ class GameScene extends Phaser.Scene {
       lineSpacing: 1,
       wordWrap: { width: 360, useAdvancedWrap: true }
     });
+    this.dispatchBg.setVisible(false);
+    this.dispatchText.setVisible(false);
 
     this.add.image(180, 672, "mini-map-panel").setOrigin(0).setScale(1, 0.86).setAlpha(0.94);
     this.routeLabel = this.add.text(200, 680, "Linia 8: Zarzew -> Teofilow", { fontSize: "12px", color: "#d9d3c4", fontStyle: "700" });
@@ -1897,8 +1904,10 @@ class GameScene extends Phaser.Scene {
       this.nextDispatchAt = this.time.now + Phaser.Math.Between(7000, 10500);
     }
     const active = this.time.now < this.dispatchUntil;
-    this.dispatchBg.setAlpha(active ? 0.9 : 0.48);
-    this.dispatchText.setAlpha(active ? 1 : 0.58);
+    this.dispatchBg.setVisible(active);
+    this.dispatchText.setVisible(active);
+    this.dispatchBg.setAlpha(active ? 0.9 : 0);
+    this.dispatchText.setAlpha(active ? 1 : 0);
   }
 
   dispatch(text, duration = 4300) {
@@ -2183,13 +2192,21 @@ class GameScene extends Phaser.Scene {
     this.passengerText.setText(`Pax ${Math.round(this.passengers)} | Dow ${this.delivered} | Combo x${this.combo.toFixed(2)}`);
     const switchText = `Zwrotnica ${this.switchChoice === "straight" ? "PROSTO(E)" : "SKRET(Q)"}`;
     this.brakeText.setText(recommended === null ? `${switchText} | Rating ${this.stopRating}` : `Hamuj do ${Math.round(this.toDisplaySpeed(recommended))} km/h | ${switchText}`);
-    this.modeBadgeText.setText(`${this.mode.label}\nTor ${Math.round(this.mode.trackMin * 100)}-${Math.round(this.mode.trackMax * 100)}% | Ruch x${this.mode.traffic.toFixed(2)}`);
-    this.nextSwitchText.setText(nextSwitch ? `Zwrotnica za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}: ${nextSwitch.correct === "left" ? "Q SKRET" : "E PROSTO"}` : "Zwrotnice: brak blisko");
+    this.modeBadgeText.setText(`${this.mode.label} | Ruch x${this.mode.traffic.toFixed(2)}`);
+    const showSwitch = Boolean(nextSwitch && nextSwitch.distance - this.distance < 1100);
+    this.nextSwitchText.setText(showSwitch ? `Zwrotnica za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}: ${nextSwitch.correct === "left" ? "Q SKRET" : "E PROSTO"}` : "");
     const recentFeedback = this.feedbackReasons
       .filter((item) => this.time.now - item.time < 5200)
-      .slice(0, 2);
-    this.feedbackText.setText(recentFeedback.length ? `Feedback:\n${recentFeedback.map((item) => item.text).join("\n")}` : "Feedback: czysta jazda");
+      .slice(0, 1);
+    this.feedbackText.setText(recentFeedback.length ? `Feedback: ${recentFeedback[0].text}` : "");
     this.feedbackText.setColor(recentFeedback[0]?.color || "#8ea0a8");
+    this.nextSwitchText.setVisible(showSwitch);
+    this.modeBadgeText.setVisible(showSwitch);
+    this.modeBadgeBg.setVisible(showSwitch);
+    this.feedbackText.setVisible(Boolean(recentFeedback.length));
+    this.feedbackBg.setVisible(Boolean(recentFeedback.length));
+    this.feedbackBg.y = showSwitch ? 274 : 214;
+    this.feedbackText.y = showSwitch ? 286 : 228;
     this.fitText(this.nextText, 354, 11, 8);
     this.fitText(this.signalText, 354, 10, 8);
     this.fitText(this.scheduleText, 354, 10, 8);
@@ -2273,7 +2290,6 @@ class GameScene extends Phaser.Scene {
     this.applySurfacePalette(bg);
     if (this.lastBgMessage !== bg) {
       this.lastBgMessage = bg;
-      this.showMessage(`Segment: ${BG_LABELS[bg] || bg}`, 1400, "#f4efe4");
       const lines = this.districtProfile.dispatch || [];
       if (lines.length) this.dispatch(lines[0], 5200);
     }
@@ -2586,16 +2602,16 @@ class GameScene extends Phaser.Scene {
 
     const layer = this.add.container(0, 0).setDepth(2200);
     layer.add(this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x050607, 0.68).setOrigin(0));
-    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, 960, 504, 0x0d1318, 0.98)
+    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, 930, 500, 0x0d1318, 0.98)
       .setStrokeStyle(5, 0xf4d35e, 1));
-    layer.add(this.add.rectangle(WIDTH / 2 - 136, HEIGHT / 2 + 10, 640, 420, 0x101820, 0.94)
+    layer.add(this.add.rectangle(WIDTH / 2 - 150, HEIGHT / 2 + 12, 600, 400, 0x101820, 0.94)
       .setStrokeStyle(2, 0x56636c, 1));
-    layer.add(this.add.rectangle(WIDTH / 2 + 286, HEIGHT / 2 + 10, 238, 420, 0x101820, 0.94)
+    layer.add(this.add.rectangle(WIDTH / 2 + 270, HEIGHT / 2 + 12, 250, 400, 0x101820, 0.94)
       .setStrokeStyle(2, 0x56636c, 1));
-    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2 - 206, 890, 14, 0x26323a, 0.9));
+    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2 - 206, 860, 14, 0x26323a, 0.9));
 
     layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 218, title, {
-      fontSize: "32px",
+      fontSize: "28px",
       fontStyle: "700",
       color: "#f4efe4",
       stroke: "#111319",
@@ -2603,8 +2619,8 @@ class GameScene extends Phaser.Scene {
       align: "center"
     }).setOrigin(0.5));
 
-    layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 165, `SCORE: ${finalScore}`, {
-      fontSize: "30px",
+    layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 166, `SCORE: ${finalScore}`, {
+      fontSize: "28px",
       fontStyle: "700",
       color: isRecord ? "#50d2c2" : "#ffb22e",
       align: "center"
@@ -2617,43 +2633,43 @@ class GameScene extends Phaser.Scene {
       }).setOrigin(0.5));
     }
 
-    this.addResultBars(layer, WIDTH / 2 - 430, HEIGHT / 2 - 130);
+    this.addResultBars(layer, WIDTH / 2 - 420, HEIGHT / 2 - 132);
 
     const lines = detail.split("\n");
-    const summary = lines.slice(0, 7).join("\n");
-    const missions = lines.slice(8).join("\n");
-    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 - 108, "RAPORT KURSU", {
+    const summary = lines.slice(0, 5).join("\n");
+    const missions = lines.slice(8, 13).join("\n");
+    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 - 52, "RAPORT KURSU", {
       fontSize: "16px",
       fontStyle: "700",
       color: "#f4d35e"
     }));
-    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 - 78, summary, {
-      fontSize: "13px",
+    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 - 25, summary, {
+      fontSize: "12px",
       color: "#d9d3c4",
       align: "left",
-      lineSpacing: 3,
-      wordWrap: { width: 600, useAdvancedWrap: true }
+      lineSpacing: 2,
+      wordWrap: { width: 550, useAdvancedWrap: true }
     }));
-    layer.add(this.add.rectangle(WIDTH / 2 - 136, HEIGHT / 2 + 72, 590, 2, 0x34434b, 1));
-    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 + 92, "CELE", {
+    layer.add(this.add.rectangle(WIDTH / 2 - 150, HEIGHT / 2 + 92, 550, 2, 0x34434b, 1));
+    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 + 112, "CELE", {
       fontSize: "16px",
       fontStyle: "700",
       color: "#f4d35e"
     }));
-    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 + 120, missions, {
-      fontSize: "13px",
+    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 + 140, missions, {
+      fontSize: "12px",
       color: "#f4efe4",
       align: "left",
-      lineSpacing: 3,
-      wordWrap: { width: 600, useAdvancedWrap: true }
+      lineSpacing: 2,
+      wordWrap: { width: 550, useAdvancedWrap: true }
     }));
-    this.addHistoryPanel(layer, WIDTH / 2 + 180, HEIGHT / 2 - 162, history);
-    layer.add(this.add.text(WIDTH / 2 - 430, HEIGHT / 2 + 205, `Rekord: ${Math.max(finalScore, highScore)}`, {
-      fontSize: "16px",
+    this.addHistoryPanel(layer, WIDTH / 2 + 160, HEIGHT / 2 - 145, history);
+    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 + 205, `Rekord: ${Math.max(finalScore, highScore)}`, {
+      fontSize: "14px",
       color: "#f4efe4"
     }));
-    layer.add(this.add.text(WIDTH / 2 + 430, HEIGHT / 2 + 205, "R: jeszcze raz    Esc: menu", {
-      fontSize: "17px",
+    layer.add(this.add.text(WIDTH / 2 + 410, HEIGHT / 2 + 205, "R: jeszcze raz    Esc: menu", {
+      fontSize: "15px",
       fontStyle: "700",
       color: "#f4d35e"
     }).setOrigin(1, 0));
@@ -2668,10 +2684,10 @@ class GameScene extends Phaser.Scene {
       ["Zwrotn.", SWITCHES.length ? (this.stats.switchCorrect / SWITCHES.length) * 100 : 100, 0xd987ff]
     ];
     values.forEach(([label, value, color], index) => {
-      const yy = y + index * 18;
-      layer.add(this.add.text(x, yy - 7, label, { fontSize: "11px", color: "#d9d3c4", fontStyle: "700" }));
-      layer.add(this.add.rectangle(x + 72, yy, 130, 7, 0x26323a, 1).setOrigin(0, 0.5));
-      layer.add(this.add.rectangle(x + 72, yy, Phaser.Math.Clamp(value, 0, 100) * 1.3, 7, color, 0.95).setOrigin(0, 0.5));
+      const yy = y + index * 14;
+      layer.add(this.add.text(x, yy - 6, label, { fontSize: "10px", color: "#d9d3c4", fontStyle: "700" }));
+      layer.add(this.add.rectangle(x + 66, yy, 118, 6, 0x26323a, 1).setOrigin(0, 0.5));
+      layer.add(this.add.rectangle(x + 66, yy, Phaser.Math.Clamp(value, 0, 100) * 1.18, 6, color, 0.95).setOrigin(0, 0.5));
     });
   }
 
@@ -2685,22 +2701,22 @@ class GameScene extends Phaser.Scene {
       layer.add(this.add.text(x, y + 34, "Brak historii", { fontSize: "12px", color: "#d9d3c4" }));
       return;
     }
-    history.slice(0, 5).forEach((run, index) => {
-      const yy = y + 34 + index * 58;
+    history.slice(0, 4).forEach((run, index) => {
+      const yy = y + 34 + index * 52;
       const color = index === 0 ? 0xf4d35e : 0x56636c;
-      layer.add(this.add.rectangle(x + 106, yy + 20, 212, 48, 0x0d1318, 0.96)
+      layer.add(this.add.rectangle(x + 110, yy + 18, 220, 44, 0x0d1318, 0.96)
         .setStrokeStyle(1, color, index === 0 ? 0.95 : 0.65));
       layer.add(this.add.text(x + 8, yy + 3, `${index + 1}. ${run.score}  ${run.grade}`, {
-        fontSize: "14px",
+        fontSize: "13px",
         fontStyle: "700",
         color: index === 0 ? "#ffb22e" : "#f4efe4"
       }));
       layer.add(this.add.text(x + 8, yy + 22, `${run.mode} | ${run.vehicle.replace("Konstal ", "").replace("Pesa ", "")}`, {
-        fontSize: "10px",
+        fontSize: "9px",
         color: "#d9d3c4"
       }));
-      layer.add(this.add.text(x + 8, yy + 36, `Plyn ${run.smoothness}%  Zad ${run.satisfaction}%`, {
-        fontSize: "10px",
+      layer.add(this.add.text(x + 8, yy + 34, `Plyn ${run.smoothness}%  Zad ${run.satisfaction}%`, {
+        fontSize: "9px",
         color: "#8ea0a8"
       }));
     });
