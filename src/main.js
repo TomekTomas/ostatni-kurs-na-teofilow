@@ -726,7 +726,6 @@ class GameScene extends Phaser.Scene {
     this.laneA = this.add.tileSprite(0, 584, WIDTH, 6, "track").setOrigin(0).setScale(1, 0.06).setAlpha(0.18);
     this.roadStripeB = this.add.tileSprite(0, 626, WIDTH, 6, "track").setOrigin(0).setScale(1, 0.06).setAlpha(0.16);
     this.curbFront = this.add.tileSprite(0, 630, WIDTH, 8, "plac").setOrigin(0).setScale(0.32, 0.06).setAlpha(0.38);
-    this.streetMarkings = this.makeStreetMarkings();
     this.track = this.add.tileSprite(0, TRACK_Y, WIDTH, 96, "track").setOrigin(0);
     this.platform = this.add.rectangle(0, 650, WIDTH, 70, 0x3f4448).setOrigin(0);
     this.platformCurb = this.add.rectangle(0, 648, WIDTH, 5, 0xc9d0ce, 0.8).setOrigin(0);
@@ -763,6 +762,7 @@ class GameScene extends Phaser.Scene {
     });
     this.createDoorPanels();
     this.createOnboardPassengers();
+    this.streetMarkings = this.makeStreetMarkings();
 
     this.passengerSprites = this.add.group();
     for (let i = 0; i < 10; i++) {

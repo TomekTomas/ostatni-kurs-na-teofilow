@@ -35,6 +35,12 @@ if (!ringBellSource) {
   fail("ringBell() must initialize cleared before using it in satisfaction logic");
 }
 
+const tramCreationIndex = source.indexOf("this.tram = this.add");
+const streetMarkingsIndex = source.indexOf("this.streetMarkings = this.makeStreetMarkings()");
+if (tramCreationIndex < 0 || streetMarkingsIndex < 0 || streetMarkingsIndex < tramCreationIndex) {
+  fail("Street markings must be created after tram sprites, because screenX depends on this.tram.x");
+}
+
 for (const match of source.matchAll(/this\.load\.image\("([^"]+)", "([^"]+)"\)/g)) {
   if (!fs.existsSync(match[2])) fail(`Missing image asset: ${match[1]} -> ${match[2]}`);
 }
