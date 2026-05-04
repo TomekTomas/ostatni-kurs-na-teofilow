@@ -74,15 +74,15 @@ const GAME_MODES = {
   },
   rush: {
     label: "Godziny szczytu",
-    description: "Wiecej ruchu i mniej czasu",
-    timeLimit: 760,
-    traffic: 1.65,
-    eventPressure: 1.25,
-    speedAllowance: 0.94,
-    trackMin: 0.32,
-    trackMax: 0.9,
-    passengerDemand: 1.25,
-    dwellScale: 1.14,
+    description: "Korki, wiecej pasazerow, ciasny rozklad",
+    timeLimit: 720,
+    traffic: 2.25,
+    eventPressure: 1.35,
+    speedAllowance: 0.98,
+    trackMin: 0.42,
+    trackMax: 0.95,
+    passengerDemand: 1.48,
+    dwellScale: 1.28,
     night: false,
     allowGameOver: true
   },
@@ -626,7 +626,9 @@ class GameScene extends Phaser.Scene {
     this.speed = 0;
     this.throttle = 0;
     this.trackCondition = 0.74;
-    this.nextConditionAt = 700;
+    this.trackTargetCondition = this.trackCondition;
+    this.trackChangeNotice = 0;
+    this.nextConditionAt = 900;
     this.dangerTime = 0;
     this.satisfaction = 100;
     this.smoothness = 100;
@@ -786,18 +788,25 @@ class GameScene extends Phaser.Scene {
 
   createRouteObjects() {
     this.stations = STOPS.map((stop) => {
-      const zone = this.add.rectangle(this.screenX(stop.distance), TRAM_BASE_Y + 18, 390, 58, 0xf4d35e, 0.09)
+      const isUnicornStop = stop.id === "piotrkowska";
+      const zoneWidth = isUnicornStop ? 540 : 390;
+      const zone = this.add.rectangle(this.screenX(stop.distance), TRAM_BASE_Y + 18, zoneWidth, 58, 0xf4d35e, 0.09)
         .setStrokeStyle(2, 0xf4d35e, 0.62)
         .setVisible(false);
-      const shelterKey = STATION_KEYS[(stop.id.length + stop.name.length) % STATION_KEYS.length];
-      const shelterScale = shelterKey === "station" ? 0.48 : shelterKey === "station-long" ? 0.45 : 0.43;
-      const shelter = this.add.image(this.screenX(stop.distance) + 106, 540, shelterKey).setScale(shelterScale).setAlpha(0.95).setDepth(12).setVisible(false);
-      const card = this.add.image(this.screenX(stop.distance) - 118, 404, "stop-card").setOrigin(0).setScale(0.82, 0.82).setVisible(false);
-      const label = this.add.text(this.screenX(stop.distance) - 102, 418, `${stop.name}\n${stop.street}`, {
+      const shelterKey = isUnicornStop ? "unicorn" : STATION_KEYS[(stop.id.length + stop.name.length) % STATION_KEYS.length];
+      const shelterScale = isUnicornStop ? 0.72 : shelterKey === "station" ? 0.48 : shelterKey === "station-long" ? 0.45 : 0.43;
+      const shelterOffsetX = isUnicornStop ? 128 : 106;
+      const shelterY = isUnicornStop ? 526 : 540;
+      const shelter = this.add.image(this.screenX(stop.distance) + shelterOffsetX, shelterY, shelterKey).setScale(shelterScale).setAlpha(0.95).setDepth(12).setVisible(false);
+      const cardOffsetX = isUnicornStop ? -190 : -118;
+      const labelOffsetX = cardOffsetX + 16;
+      const card = this.add.image(this.screenX(stop.distance) + cardOffsetX, 404, "stop-card").setOrigin(0).setScale(isUnicornStop ? 0.92 : 0.82, isUnicornStop ? 0.86 : 0.82).setVisible(false);
+      const stopSubtitle = isUnicornStop ? "Stajnia Jednorozcow" : stop.street;
+      const label = this.add.text(this.screenX(stop.distance) + labelOffsetX, 418, `${stop.name}\n${stopSubtitle}`, {
         fontSize: stop.name.length > 18 ? "11px" : "13px",
         color: "#f4d35e",
         fontStyle: "700",
-        wordWrap: { width: 218, useAdvancedWrap: true }
+        wordWrap: { width: isUnicornStop ? 252 : 218, useAdvancedWrap: true }
       }).setDepth(55).setVisible(false);
       card.setDepth(54);
       const waiting = this.add.group();
@@ -820,7 +829,7 @@ class GameScene extends Phaser.Scene {
         person.localStopOffset = 84 + i * 26;
         waiting.add(person);
       }
-      return { ...stop, zone, shelter, card, label, waiting, served: false };
+      return { ...stop, zone, shelter, shelterOffsetX, shelterY, card, cardOffsetX, label, labelOffsetX, waiting, served: false };
     });
 
     this.events = EVENTS.map((event, index) => {
@@ -1230,8 +1239,22 @@ class GameScene extends Phaser.Scene {
     this.timeLeft -= dt;
 
     if (this.distance > this.nextConditionAt) {
-      this.trackCondition = Phaser.Math.FloatBetween(this.mode.trackMin, this.mode.trackMax);
-      this.nextConditionAt += Phaser.Math.Between(420, 720);
+      const next = Phaser.Math.FloatBetween(this.mode.trackMin, this.mode.trackMax);
+      const maxDrop = 0.14;
+      this.trackTargetCondition = next < this.trackTargetCondition
+        ? Math.max(next, this.trackTargetCondition - maxDrop)
+        : Math.min(next, this.trackTargetCondition + 0.18);
+      this.trackChangeNotice = 2.6;
+      this.nextConditionAt += Phaser.Math.Between(760, 1160);
+    }
+    const trackStep = dt * (this.trackTargetCondition < this.trackCondition ? 0.075 : 0.12);
+    const trackDiff = this.trackTargetCondition - this.trackCondition;
+    this.trackCondition = Math.abs(trackDiff) <= trackStep
+      ? this.trackTargetCondition
+      : this.trackCondition + Math.sign(trackDiff) * trackStep;
+    this.trackChangeNotice = Math.max(0, this.trackChangeNotice - dt);
+    if (this.trackChangeNotice > 0 && this.trackTargetCondition < this.trackCondition - 0.035) {
+      this.addFeedback("gorszy odcinek torowiska za chwile", "#f4d35e");
     }
 
     const safeSpeed = this.vehicle.maxSpeed * this.trackCondition * this.vehicle.handling * this.mode.speedAllowance;
@@ -1493,7 +1516,7 @@ class GameScene extends Phaser.Scene {
       if (event.type === "rough" && !event.cleared && relative < 36 && relative > -28) {
         event.cleared = true;
         this.stats.roughSections += 1;
-        this.trackCondition = Math.min(this.trackCondition, 0.42);
+        this.trackTargetCondition = Math.min(this.trackTargetCondition, 0.46);
         this.nextConditionAt = Math.max(this.nextConditionAt, this.distance + 520);
         const roughFast = this.speed > this.vehicle.maxSpeed * 0.38;
         this.adjustSatisfaction(roughFast ? -6 : -1.5, roughFast ? "za szybko na odcinku remontowym" : "krzywe torowisko");
@@ -1518,7 +1541,6 @@ class GameScene extends Phaser.Scene {
     if (this.bellCooldown > 0) return;
     this.bellCooldown = 1.2;
     this.timeLeft -= 1.2;
-    this.adjustSatisfaction(-0.8, cleared ? "" : "niepotrzebny dzwonek");
     this.stats.bells += 1;
     this.playCue("bell");
     let cleared = false;
@@ -1556,6 +1578,7 @@ class GameScene extends Phaser.Scene {
         this.scorePopup("+75", event.sprite.x, event.sprite.y - 38, "#50d2c2");
       }
     });
+    this.adjustSatisfaction(cleared ? -0.2 : -0.8, cleared ? "" : "niepotrzebny dzwonek");
     this.showMessage(cleared ? "Drryn! Auto zjezdza z toru" : "Drryn!", 850, cleared ? "#50d2c2" : "#f4d35e");
   }
 
@@ -1679,11 +1702,11 @@ class GameScene extends Phaser.Scene {
       const active = stop === activeStop;
       const near = Math.abs(stop.distance - this.distance) < 520;
       stop.zone.x = x;
-      stop.shelter.x = x + 106;
-      stop.shelter.y = 540;
-      stop.card.x = x - 118;
+      stop.shelter.x = x + stop.shelterOffsetX;
+      stop.shelter.y = stop.shelterY;
+      stop.card.x = x + stop.cardOffsetX;
       stop.card.y = 404;
-      stop.label.x = x - 102;
+      stop.label.x = x + stop.labelOffsetX;
       stop.label.y = 418;
       stop.zone.setVisible(active && near && !stop.served);
       stop.shelter.setVisible(active && near && !stop.served);

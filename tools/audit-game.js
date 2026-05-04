@@ -5,6 +5,9 @@ const html = fs.readFileSync("index.html", "utf8");
 const css = fs.readFileSync("src/styles.css", "utf8");
 const failures = [];
 const warnings = [];
+const ringBellStart = source.indexOf("  ringBell() {");
+const ringBellEnd = ringBellStart >= 0 ? source.indexOf("\n  updateSwitches()", ringBellStart) : -1;
+const ringBellSource = ringBellStart >= 0 && ringBellEnd > ringBellStart ? source.slice(ringBellStart, ringBellEnd) : "";
 
 function fail(message) {
   failures.push(message);
@@ -24,6 +27,12 @@ function expectHtml(pattern, message) {
 
 function expectCss(pattern, message) {
   if (!pattern.test(css)) fail(message);
+}
+
+if (!ringBellSource) {
+  fail("ringBell() should exist so car-clearing bell behavior can be audited");
+} else if (ringBellSource.indexOf("let cleared = false") > ringBellSource.indexOf("adjustSatisfaction(")) {
+  fail("ringBell() must initialize cleared before using it in satisfaction logic");
 }
 
 for (const match of source.matchAll(/this\.load\.image\("([^"]+)", "([^"]+)"\)/g)) {
@@ -87,6 +96,9 @@ expectSource(/smoothnessSamples\.push/, "Smoothness should be calculated from re
 expectSource(/openTrams/, "Door opening should use dedicated open tram overlays");
 expectSource(/tramNoseReach/, "Car obstacle collision should be measured against the tram nose");
 expectSource(/displayMaxSpeed:\s*65[\s\S]*displayMaxSpeed:\s*70/, "Vehicle display speed caps should stay near real Lodz tram speeds");
+expectSource(/trackTargetCondition/, "Track condition should transition toward a target instead of changing safe speed instantly");
+expectSource(/const maxDrop = 0\.14/, "Track condition drops should be capped so allowed speed does not collapse abruptly");
+expectSource(/Phaser\.Math\.Between\(760, 1160\)/, "Track condition changes should be spaced far enough apart to feel readable");
 expectSource(/roadBackLane[\s\S]*roadFrontLane/, "City traffic should have separated visual road lanes");
 expectSource(/car\.parallax/, "Ambient traffic should move with a small world-relative parallax");
 expectSource(/event\.detouring/, "Obstacle cars should have a dedicated detour state after the bell");
@@ -112,13 +124,15 @@ expectSource(/contact = this\.add\.rectangle/, "Catenary should include a contac
 expectSource(/const poleX = 74/, "Catenary poles should sit close to the track, not far across the street");
 expectSource(/const wireY = 414/, "Catenary contact wire should be lowered near the pantograph");
 expectSource(/shelterKey === "station" \? 0\.48/, "Station shelters should stay scaled below tram height");
-expectSource(/setScale\(0\.82, 0\.82\)/, "Stop name cards should be scaled down to match the shelter");
+expectSource(/setScale\(isUnicornStop \? 0\.92 : 0\.82, isUnicornStop \? 0\.86 : 0\.82\)/, "Stop name cards should be scaled down to match the shelter, with a larger Stajnia variant");
+expectSource(/isUnicornStop = stop\.id === "piotrkowska"/, "Piotrkowska Centrum should use a dedicated Stajnia Jednorozcow stop object");
+expectSource(/shelterKey = isUnicornStop \? "unicorn"/, "Stajnia Jednorozcow should render as a special generated unicorn station asset");
 expectSource(/const GAME_MODES = \{/, "Game should expose configurable modes");
 expectSource(/makeModeButton\(/, "Menu should allow choosing a game mode");
 expectSource(/addResultBars\(/, "Results screen should show visual rating bars");
 expectSource(/allowGameOver/, "Training mode should be able to soften game-over conditions");
 expectSource(/night:\s*\{[\s\S]*speedAllowance:\s*1\.22[\s\S]*night:\s*true/, "Night mode should allow faster running and enable night visuals");
-expectSource(/rush:\s*\{[\s\S]*traffic:\s*1\.65/, "Rush-hour mode should meaningfully increase city traffic");
+expectSource(/rush:\s*\{[\s\S]*traffic:\s*2\.25[\s\S]*passengerDemand:\s*1\.48/, "Rush-hour mode should meaningfully increase traffic and passenger demand");
 expectSource(/this\.mode\.speedAllowance/, "Safe speed calculations should use the selected mode allowance");
 expectSource(/createNightLayer\(/, "Night mode should render a dark sky and stars layer");
 expectSource(/makeStreetLights\(/, "Night mode should include lit street lamps along the route");
