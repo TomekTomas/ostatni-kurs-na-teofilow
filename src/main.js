@@ -795,9 +795,9 @@ class GameScene extends Phaser.Scene {
         .setStrokeStyle(2, 0xf4d35e, 0.62)
         .setVisible(false);
       const shelterKey = isUnicornStop ? "station-unicorn" : STATION_KEYS[(stop.id.length + stop.name.length) % STATION_KEYS.length];
-      const shelterScale = isUnicornStop ? 0.52 : shelterKey === "station" ? 0.48 : shelterKey === "station-long" ? 0.45 : 0.43;
-      const shelterOffsetX = isUnicornStop ? 146 : 106;
-      const shelterY = isUnicornStop ? 532 : 540;
+      const shelterScale = isUnicornStop ? 0.44 : shelterKey === "station" ? 0.48 : shelterKey === "station-long" ? 0.45 : 0.43;
+      const shelterOffsetX = isUnicornStop ? 210 : 106;
+      const shelterY = isUnicornStop ? 548 : 540;
       const shelter = this.add.image(this.screenX(stop.distance) + shelterOffsetX, shelterY, shelterKey).setScale(shelterScale).setAlpha(0.95).setDepth(12).setVisible(false);
       const cardOffsetX = isUnicornStop ? -190 : -118;
       const labelOffsetX = cardOffsetX + 16;
