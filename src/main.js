@@ -2018,7 +2018,7 @@ class GameScene extends Phaser.Scene {
     const defs = [
       { type: "landmark", key: "landmark-znicze", distance: Math.round(0.02 * ROUTE_SCALE), y: 532, scale: 0.26, depth: 13 },
       { type: "landmark", key: "landmark-drzewo", distance: Math.round(1.55 * ROUTE_SCALE), y: 534, scale: 0.26, depth: 13 },
-      { type: "landmark", key: "landmark-widzew-fans", distance: Math.round(3.32 * ROUTE_SCALE), y: 524, scale: 0.48, depth: 14, animated: true },
+      { type: "landmark", key: "landmark-widzew-fans", distance: Math.round(3.32 * ROUTE_SCALE), y: 532, scale: 0.31, depth: 14, animated: true },
       { type: "landmark", key: "landmark-smolarek-mural", distance: Math.round(3.46 * ROUTE_SCALE), y: 536, scale: 0.32, depth: 10 },
       { type: "landmark", key: "landmark-witcher-mural", distance: Math.round(7.3 * ROUTE_SCALE), y: 536, scale: 0.31, depth: 10 },
       { type: "landmark", key: "landmark-unicorn-statue", distance: Math.round(7.78 * ROUTE_SCALE), y: 530, scale: 0.36, depth: 13 },
