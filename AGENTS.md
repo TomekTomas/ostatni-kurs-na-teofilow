@@ -12,10 +12,26 @@ Gracz prowadzi tramwaj przez 34 przystanki od Cm. Zarzew do Teofilowa.
 - Phaser 3 z CDN (`https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js`), nie z npm
 
 ## Architektura
-- `src/main.js` — cała logika gry (3171 linii, 3 sceny Phasera: BootScene, MenuScene, GameScene)
+Projekt jest zmodularyzowany na ES modules:
+
+- `src/main.js` — punkt wejścia (73 linie): importy, config Phasera, bootstrap, runtime guards
+- `src/config/constants.js` — BASE_WIDTH, HEIGHT, WIDTH, TRACK_Y, TRAM_BASE_Y, ROUTE_SCALE, FONT_FAMILY, SCORE_WEIGHTS
+- `src/config/vehicles.js` — VEHICLES (Konstal 805Na, Pesa Swing)
+- `src/config/modes.js` — GAME_MODES (last, training, rush, night)
+- `src/config/route.js` — STOPS (34), EVENTS, LIGHTS, SWITCHES, LCN_BILLBOARDS, ROUTE_MOMENTS, BACKGROUNDS
+- `src/config/districts.js` — DISTRICT_PROFILES, SURFACE_PALETTES, DISTRICT_VISUALS, BG_LABELS, MAJOR_STOP_IDS
+- `src/config/ui.js` — UI_ASSETS, PASSENGER_KEYS, STATION_KEYS, MAP_LABELS, WIDZEW_STADIUM_MUSIC
+- `src/scenes/BootScene.js` — preload assetów (~90 linii)
+- `src/scenes/MenuScene.js` — menu, wybór pojazdu/trybu (~180 linii)
+- `src/scenes/GameScene.js` — główna pętla gry (~2450 linii): fizyka, przystanki, scoring, HUD, tutorial, audio, ruch uliczny, piesi, catenary, pogoda, detale
+- `src/logic/scoring.js` — czysta logika scoringu (testowalna)
+- `src/logic/physics.js` — czysta logika fizyki (testowalna)
+- `src/logic/route.js` — pomocnicze funkcje trasy
+- `src/logic/missions.js` — ewaluacja misji
+- `src/logic/balance.js` — balans pasażerów
 - `src/styles.css` — style CSS gry
-- `index.html` — punkt wejścia, ładuje Phaser z CDN + main.js
-- `tools/audit-game.js` — regresyjny audyt regex (czyta src/main.js i sprawdza obecność kluczowych wzorców)
+- `index.html` — punkt wejścia HTML, ładuje Phaser z CDN + main.js (type=module)
+- `tools/audit-game.js` — regresyjny audyt regex (czyta WSZYSTKIE pliki .js z src/ rekurencyjnie)
 - `tools/dev-server.js` — lokalny serwer na porcie 4173
 
 ## Sceny Phasera

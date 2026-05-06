@@ -172,8 +172,9 @@ expectSource(/scheduleDeltaForStop\(/, "Stops should be evaluated against the ti
 expectSource(/applyScheduleResult\(/, "Punctuality should affect scoring and passenger comfort");
 expectSource(/scheduleText/, "HUD should show timetable delta and punctuality");
 expectSource(/Punktualnosc minimum 70%/, "Mission results should include a punctuality goal");
-expectSource(/modeBadgeBg = this\.add\.rectangle\(16, 210, 410, 62/, "Mode HUD panel should sit under the left HUD instead of covering the playfield center");
-expectSource(/this\.scheduleText = this\.add\.text\(WIDTH - 382, 66/, "Top-right HUD should reserve a separate schedule row");
+expectSource(/modeBadgeBg = this\.add\.rectangle\(leftX \+ 10, topY \+ 72, leftW - 20, 18/, "Mode and switch HUD should be compact and stay inside the top-left panel");
+expectSource(/this\.scheduleText = this\.add\.text\(rightX \+ 16, topY \+ 52/, "Top-right HUD should reserve a separate schedule row");
+expectSource(/this\.throttleBg = this\.add\.rectangle\(leftX \+ 56, topY \+ 60/, "Speed and driving bars should be grouped in the left vehicle-status HUD");
 expectSource(/panel\.slideDistance/, "Door animation should slide door leaves, not just fade a block");
 expectSource(/leftLeaf[\s\S]*rightLeaf/, "Door panels should be built from two sliding leaves");
 expectSource(/makeLodzDetails\(/, "Route should include local Lodz detail props and easter eggs");

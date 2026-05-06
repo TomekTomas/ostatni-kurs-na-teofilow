@@ -66,6 +66,7 @@ export class GameScene extends Phaser.Scene {
     this.finishBonusApplied = false;
     this.lastBgMessage = "zarzew";
     this.routeMomentsShown = new Set();
+    this.routeMomentUntil = 0;
     this.dispatchUntil = 0;
     this.nextDispatchAt = 1400;
     this.lastDispatchText = "";
@@ -96,6 +97,13 @@ export class GameScene extends Phaser.Scene {
     this.stadiumMusic = null;
     this.stadiumMusicSourceIndex = 0;
     this.stadiumMusicFailed = false;
+    this.oncomingTrams = [];
+    this.weatherEffects = null;
+    this.ambientAudio = null;
+    this.ambientAnnouncedStops = new Set();
+    this.lastAmbientClatterAt = 0;
+    this.nextAmbientClatterAt = 0;
+    this.lastAmbientWhooshAt = 0;
 
     this.createWorld();
     this.createRouteObjects();
@@ -104,10 +112,10 @@ export class GameScene extends Phaser.Scene {
     this.createControls();
     this.createTutorialOverlay();
     this.createRideLoop();
+    this.createAmbientAudio();
     this.createStadiumMusic();
     this.sys.events.once("shutdown", () => {
-      this.stopRideLoop();
-      this.stopStadiumMusic();
+      this.cleanupScene();
     });
     this.showMessage(`${this.mode.label}: dowiez pasazerow na Teofilow`, 2400, "#f4d35e");
   }
@@ -194,6 +202,8 @@ export class GameScene extends Phaser.Scene {
     this.cityLife = this.makeCityLifeEffects();
     this.lcnBillboards = this.makeLcnBillboards();
     this.lodzDetails = this.makeLodzDetails();
+    this.oncomingTrams = this.makeOncomingTrams();
+    this.weatherEffects = this.makeWeatherEffects();
   }
 
   createRouteObjects() {
@@ -237,6 +247,13 @@ export class GameScene extends Phaser.Scene {
         ).setVisible(false);
         person.baseY = platformY;
         person.localStopOffset = 84 + i * 26;
+        person.behavior = this.pickPassengerBehavior();
+        person.behaviorPhase = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        person.behaviorBaseX = person.x;
+        person.behaviorBaseY = platformY;
+        person.behaviorWaveSeed = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        person.behaviorMoveTarget = null;
+        person.behaviorDoorTween = null;
         waiting.add(person);
       }
       return { ...stop, zone, shelter, shelterOffsetX, shelterY, card, cardOffsetX, label, labelOffsetX, waiting, served: false };
@@ -295,73 +312,100 @@ export class GameScene extends Phaser.Scene {
   }
 
   createHud() {
-    this.add.rectangle(0, 0, WIDTH, 92, 0x0f1419, 0.78).setOrigin(0);
-    this.add.image(16, 8, "panel-dark").setOrigin(0).setScale(0.5, 0.68);
-    this.add.image(WIDTH / 2 - 150, 8, "panel-dark").setOrigin(0).setScale(0.84, 0.68);
-    this.add.rectangle(WIDTH - 430, 8, 408, 72, 0x0c1116, 0.94).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.95);
+    const topY = 8;
+    const leftX = 18;
+    const leftW = 388;
+    const centerW = 350;
+    const centerX = WIDTH / 2 - centerW / 2;
+    const rightW = 408;
+    const rightX = WIDTH - rightW - 18;
 
-    this.clockText = this.add.text(36, 27, "", { fontSize: "26px", color: "#ffb22e", fontStyle: "700" });
-    this.scoreText = this.add.text(WIDTH / 2, 28, "", { fontSize: "24px", color: "#ffb22e", fontStyle: "700" }).setOrigin(0.5, 0);
-    this.nextText = this.add.text(WIDTH - 382, 18, "", {
+    this.add.rectangle(0, 0, WIDTH, 92, 0x0b1116, 0.88).setOrigin(0);
+    this.add.rectangle(leftX, topY, leftW, 76, 0x0c1116, 0.92).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.75);
+    this.add.rectangle(centerX, topY, centerW, 76, 0x0c1116, 0.92).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.75);
+    this.add.rectangle(rightX, topY, rightW, 76, 0x0c1116, 0.92).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.75);
+
+    this.clockText = this.add.text(leftX + 14, topY + 8, "", { fontSize: "21px", color: "#ffb22e", fontStyle: "700" });
+    this.speedText = this.add.text(leftX + 14, topY + 34, "", { fontSize: "11px", color: "#f4efe4", fontStyle: "700" });
+    this.trackText = this.add.text(leftX + 242, topY + 16, "", { fontSize: "9px", color: "#d9d3c4", lineSpacing: 1, wordWrap: { width: 130, useAdvancedWrap: true } });
+    this.passengerText = this.add.text(leftX + 242, topY + 36, "", { fontSize: "9px", color: "#d9d3c4" });
+    this.throttleLabel = this.add.text(leftX + 14, topY + 54, "Nast.", { fontSize: "8px", color: "#8ea0a8", fontStyle: "700" });
+    this.trackCondLabel = this.add.text(leftX + 204, topY + 54, "Tor", { fontSize: "8px", color: "#8ea0a8", fontStyle: "700" });
+    this.throttleBg = this.add.rectangle(leftX + 56, topY + 60, 132, 6, 0x20242b).setOrigin(0, 0.5);
+    this.throttleFill = this.add.rectangle(leftX + 56, topY + 60, 1, 6, 0xf4d35e).setOrigin(0, 0.5);
+    this.condBg = this.add.rectangle(leftX + 236, topY + 60, 132, 6, 0x20242b).setOrigin(0, 0.5);
+    this.condFill = this.add.rectangle(leftX + 236, topY + 60, 1, 6, 0x50d2c2).setOrigin(0, 0.5);
+
+    this.scoreText = this.add.text(WIDTH / 2, topY + 9, "", { fontSize: "23px", color: "#ffb22e", fontStyle: "700" }).setOrigin(0.5, 0);
+    this.modeBadgeText = this.add.text(WIDTH / 2, topY + 42, "", { fontSize: "12px", color: "#f4efe4", fontStyle: "700", align: "center", wordWrap: { width: centerW - 32, useAdvancedWrap: true } }).setOrigin(0.5, 0);
+
+    this.nextText = this.add.text(rightX + 16, topY + 9, "", {
       fontSize: "11px",
       color: "#f4efe4",
       fontStyle: "700",
       lineSpacing: -2,
-      wordWrap: { width: 354, useAdvancedWrap: true }
+      wordWrap: { width: rightW - 32, useAdvancedWrap: true }
     });
-    this.signalText = this.add.text(WIDTH - 382, 52, "", { fontSize: "10px", color: "#d9d3c4" });
-    this.scheduleText = this.add.text(WIDTH - 382, 66, "", { fontSize: "10px", color: "#ffb22e", fontStyle: "700" });
+    this.signalText = this.add.text(rightX + 16, topY + 48, "", { fontSize: "9px", color: "#d9d3c4" });
+    this.scheduleText = this.add.text(rightX + 16, topY + 52, "", { fontSize: "9px", color: "#ffb22e", fontStyle: "700" });
 
-    this.warningText = this.add.text(WIDTH / 2, 250, "", {
-      fontSize: "20px",
+    this.warningBg = this.add.rectangle(WIDTH / 2, 138, 620, 34, 0x0c1116, 0.9).setStrokeStyle(2, 0xf4d35e, 0.9).setDepth(120);
+    this.warningText = this.add.text(WIDTH / 2, 138, "", {
+      fontSize: "13px",
       color: "#ffb22e",
       fontStyle: "700",
       stroke: "#111319",
-      strokeThickness: 3,
+      strokeThickness: 2,
       align: "center",
-      wordWrap: { width: 820, useAdvancedWrap: true }
-    }).setOrigin(0.5);
+      wordWrap: { width: 520, useAdvancedWrap: true }
+    }).setOrigin(0.5).setDepth(121);
+    this.warningBg.setVisible(false);
 
-    this.add.image(16, 104, "panel-hud").setOrigin(0).setScale(1.32, 0.92).setAlpha(0.9);
-    this.speedText = this.add.text(34, 120, "", { fontSize: "14px", color: "#f4efe4", fontStyle: "700" });
-    this.trackText = this.add.text(34, 145, "", { fontSize: "12px", color: "#d9d3c4" });
-    this.passengerText = this.add.text(34, 168, "", { fontSize: "12px", color: "#d9d3c4" });
-    this.brakeText = this.add.text(34, 188, "", { fontSize: "12px", color: "#ffb22e", fontStyle: "700" });
-    this.throttleBg = this.add.rectangle(282, 128, 140, 10, 0x20242b).setOrigin(0, 0.5);
-    this.throttleFill = this.add.rectangle(282, 128, 1, 10, 0xf4d35e).setOrigin(0, 0.5);
-    this.condBg = this.add.rectangle(282, 154, 140, 9, 0x20242b).setOrigin(0, 0.5);
-    this.condFill = this.add.rectangle(282, 154, 1, 9, 0x50d2c2).setOrigin(0, 0.5);
-    this.modeBadgeBg = this.add.rectangle(16, 210, 410, 62, 0x0f1419, 0.86).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.9);
-    this.modeBadgeText = this.add.text(34, 220, "", { fontSize: "11px", color: "#f4efe4", fontStyle: "700", lineSpacing: 1, wordWrap: { width: 374, useAdvancedWrap: true } });
-    this.nextSwitchText = this.add.text(34, 246, "", { fontSize: "10px", color: "#ffb22e", fontStyle: "700", wordWrap: { width: 374, useAdvancedWrap: true } });
-    this.feedbackBg = this.add.rectangle(16, 280, 410, 54, 0x0f1419, 0.78).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.7);
-    this.feedbackText = this.add.text(34, 290, "Feedback: czysta jazda", { fontSize: "10px", color: "#8ea0a8", fontStyle: "700", lineSpacing: 1, wordWrap: { width: 374, useAdvancedWrap: true } });
+    this.routeMomentBg = this.add.rectangle(WIDTH / 2, 138, 620, 34, 0x0c1116, 0.84).setStrokeStyle(2, 0x4b5961, 0.75).setDepth(116);
+    this.routeMomentText = this.add.text(WIDTH / 2, 138, "", {
+      fontSize: "11px",
+      color: "#f4efe4",
+      fontStyle: "700",
+      align: "center",
+      wordWrap: { width: 600, useAdvancedWrap: true }
+    }).setOrigin(0.5).setDepth(119);
+    this.routeMomentBg.setVisible(false);
+    this.routeMomentText.setVisible(false);
+
+    this.modeBadgeBg = this.add.rectangle(leftX + 10, topY + 72, leftW - 20, 18, 0x0f1419, 0).setOrigin(0);
+    this.brakeText = this.add.text(leftX + 14, topY + 74, "", { fontSize: "8px", color: "#ffb22e", fontStyle: "700", wordWrap: { width: 210, useAdvancedWrap: true } });
+    this.nextSwitchText = this.add.text(leftX + 236, topY + 74, "", { fontSize: "8px", color: "#f4efe4", fontStyle: "700", wordWrap: { width: 132, useAdvancedWrap: true } });
+    this.feedbackBg = this.add.rectangle(centerX + 16, topY + 66, centerW - 32, 18, 0x0f1419, 0).setOrigin(0);
+    this.feedbackText = this.add.text(centerX + 16, topY + 66, "", { fontSize: "8px", color: "#8ea0a8", fontStyle: "700", lineSpacing: 1, wordWrap: { width: centerW - 32, useAdvancedWrap: true } });
     this.modeBadgeBg.setVisible(false);
-    this.modeBadgeText.setVisible(false);
+    this.brakeText.setVisible(false);
     this.nextSwitchText.setVisible(false);
     this.feedbackBg.setVisible(false);
     this.feedbackText.setVisible(false);
 
-    this.dispatchBg = this.add.rectangle(WIDTH - 430, 102, 408, 58, 0x0c1116, 0.86).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.85);
-    this.dispatchText = this.add.text(WIDTH - 410, 112, "Dyspozytor: lacznosc gotowa", {
-      fontSize: "11px",
+    this.dispatchBg = this.add.rectangle(rightX + 16, topY + 66, rightW - 32, 18, 0x0c1116, 0).setOrigin(0);
+    this.dispatchText = this.add.text(rightX + 16, topY + 66, "Dyspozytor: lacznosc gotowa", {
+      fontSize: "8px",
       color: "#f4efe4",
       fontStyle: "700",
       lineSpacing: 1,
-      wordWrap: { width: 360, useAdvancedWrap: true }
+      wordWrap: { width: rightW - 28, useAdvancedWrap: true }
     });
     this.dispatchBg.setVisible(false);
     this.dispatchText.setVisible(false);
 
-    this.add.image(180, 672, "mini-map-panel").setOrigin(0).setScale(1, 0.86).setAlpha(0.94);
-    this.routeLabel = this.add.text(200, 680, "Linia 8: Zarzew -> Teofilow", { fontSize: "12px", color: "#d9d3c4", fontStyle: "700" });
-    this.progressBg = this.add.rectangle(210, 704, 860, 7, 0x111319, 0.85).setOrigin(0, 0.5);
-    this.progressFill = this.add.rectangle(210, 704, 1, 7, 0xf4d35e).setOrigin(0, 0.5);
+    this.progressWidth = Math.min(860, WIDTH - 420);
+    this.progressX = WIDTH / 2 - this.progressWidth / 2;
+    const routeY = HEIGHT - 44;
+    this.add.rectangle(this.progressX - 24, routeY - 12, this.progressWidth + 48, 46, 0x0c1116, 0.88).setOrigin(0).setStrokeStyle(2, 0x4b5961, 0.7);
+    this.routeLabel = this.add.text(this.progressX, routeY - 4, "Linia 8: Zarzew -> Teofilow", { fontSize: "10px", color: "#d9d3c4", fontStyle: "700" });
+    this.progressBg = this.add.rectangle(this.progressX, routeY + 20, this.progressWidth, 6, 0x111319, 0.9).setOrigin(0, 0.5);
+    this.progressFill = this.add.rectangle(this.progressX, routeY + 20, 1, 6, 0xf4d35e).setOrigin(0, 0.5);
     STOPS.forEach((stop) => {
-      const x = 210 + (stop.distance / ROUTE_END_DISTANCE) * 860;
+      const x = this.progressX + (stop.distance / ROUTE_END_DISTANCE) * this.progressWidth;
       const major = MAJOR_STOP_IDS.has(stop.id);
-      this.add.rectangle(x, 704, major ? 5 : 2, major ? 22 : 10, major ? 0xf4efe4 : 0x8c9298, major ? 0.9 : 0.55).setOrigin(0.5);
-      if (MAP_LABELS[stop.id]) this.add.text(x - 22, 672, MAP_LABELS[stop.id], { fontSize: "10px", color: "#f4efe4" });
+      this.add.rectangle(x, routeY + 20, major ? 5 : 2, major ? 20 : 10, major ? 0xf4efe4 : 0x8c9298, major ? 0.9 : 0.55).setOrigin(0.5);
+      if (MAP_LABELS[stop.id]) this.add.text(x - 18, routeY - 18, MAP_LABELS[stop.id], { fontSize: "8px", color: "#f4efe4" });
     });
   }
 
@@ -514,6 +558,7 @@ export class GameScene extends Phaser.Scene {
     if (this.finished) {
       this.updateRideLoop(0, true);
       this.updateStadiumMusic(0, true);
+      this.updateAmbientAudio(0, true);
       if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.scene.restart({ vehicleKey: this.vehicleKey, modeKey: this.modeKey });
       if (Phaser.Input.Keyboard.JustDown(this.keys.esc)) this.scene.start("MenuScene");
       return;
@@ -523,6 +568,7 @@ export class GameScene extends Phaser.Scene {
     if (this.paused) {
       this.updateRideLoop(0, true);
       this.updateStadiumMusic(0, true);
+      this.updateAmbientAudio(0, true);
       if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.scene.restart({ vehicleKey: this.vehicleKey, modeKey: this.modeKey });
       if (Phaser.Input.Keyboard.JustDown(this.keys.esc)) this.scene.start("MenuScene");
       return;
@@ -539,6 +585,7 @@ export class GameScene extends Phaser.Scene {
     this.updateRouteMoments();
     this.updateRideLoop(dt);
     this.updateStadiumMusic(dt);
+    this.updateAmbientAudio(dt);
     this.updateTutorial();
     this.updateHud();
     this.checkEnd();
@@ -1139,10 +1186,11 @@ export class GameScene extends Phaser.Scene {
       stop.label.setVisible(active && near && !stop.served);
       stop.waiting.getChildren().forEach((person, index) => {
         if (person.boarding) return;
-        person.x = x + person.localStopOffset;
-        person.y = person.baseY + Math.sin(this.time.now * 0.005 + index * 1.8) * 1.5;
-        person.setVisible(active && near && !stop.served);
+        this.updatePassengerBehavior(stop, person, index, active, near, x);
       });
+      if (!stop.served && Math.abs(stop.distance - this.distance) < 300 && this.speed < 40) {
+        this.movePacingPassengersToDoors(stop);
+      }
       if (stop.served) {
         stop.zone.setStrokeStyle(2, 0x50d2c2, 0.65);
         stop.label.setColor("#50d2c2");
@@ -1186,6 +1234,8 @@ export class GameScene extends Phaser.Scene {
       sw.label.setText(`${sw.name}\nQ ${sw.correct === "left" ? sw.correctLabel : sw.wrongLabel}\nE ${sw.correct === "straight" ? sw.correctLabel : sw.wrongLabel}`);
     });
 
+    this.updateOncomingTrams(dt);
+    this.updateWeatherEffects(dt);
     this.updateTrafficCars(dt);
   }
 
@@ -1217,6 +1267,384 @@ export class GameScene extends Phaser.Scene {
     car.resetJitter = key.includes("bus") ? 520 : 360;
     car.wobble = Phaser.Math.FloatBetween(0, Math.PI * 2);
     return car;
+  }
+
+  pickPassengerBehavior() {
+    const roll = Phaser.Math.FloatBetween(0, 1);
+    if (roll < 0.6) return "idle";
+    if (roll < 0.75) return "phone";
+    if (roll < 0.9) return "pacing";
+    return "waving";
+  }
+
+  updatePassengerBehavior(stop, person, index, active, near, stopX) {
+    if (!person || person.boarding) return;
+    if (person.behaviorMovingToDoor) {
+      person.setVisible(active && near && !stop.served);
+      return;
+    }
+
+    const waveActive = active && near && !stop.served && Math.abs(stop.distance - this.distance) < 400 && this.speed < 80;
+    const bob = Math.sin(this.time.now * 0.005 + index * 1.8 + person.behaviorPhase) * 1.5;
+    person.setVisible(active && near && !stop.served);
+
+    if (person.behavior === "pacing") {
+      person.x = stopX + person.localStopOffset + Math.sin(this.time.now * 0.0016 + person.behaviorPhase) * 30;
+      person.y = person.behaviorBaseY + bob;
+      person.rotation = Math.sin(this.time.now * 0.0018 + person.behaviorPhase) * 0.03;
+      return;
+    }
+
+    if (person.behavior === "phone") {
+      const glanceUp = Math.sin(this.time.now * 0.0009 + person.behaviorPhase) > 0.86;
+      person.x = stopX + person.localStopOffset;
+      person.y = person.behaviorBaseY + bob;
+      person.rotation = glanceUp ? -0.01 : -0.08 + Math.sin(this.time.now * 0.0012 + person.behaviorPhase) * 0.02;
+      return;
+    }
+
+    if (person.behavior === "waving") {
+      person.x = stopX + person.localStopOffset;
+      person.y = person.behaviorBaseY + bob;
+      person.rotation = waveActive ? Math.sin(this.time.now * 0.021 + person.behaviorWaveSeed) * 0.15 : Math.sin(this.time.now * 0.002 + person.behaviorWaveSeed) * 0.04;
+      return;
+    }
+
+    person.x = stopX + person.localStopOffset;
+    person.y = person.behaviorBaseY + bob;
+    person.rotation = Math.sin(this.time.now * 0.0013 + person.behaviorPhase) * 0.02;
+  }
+
+  movePacingPassengersToDoors(stop) {
+    if (!stop || stop.pacingMoved) return;
+    const pacingPassengers = stop.waiting.getChildren().filter((person) => person.behavior === "pacing" && !person.boarding && !person.behaviorMovingToDoor);
+    if (!pacingPassengers.length || !this.doorPanels.length) return;
+    const doorTargets = this.doorPanels
+      .filter((panel) => panel.car === this.tram || this.vehicleKey === "pesa")
+      .map((panel) => panel.car.x + panel.localX * this.vehicle.spriteScale);
+    if (!doorTargets.length) return;
+
+    pacingPassengers.forEach((person, index) => {
+      const targetX = doorTargets[index % doorTargets.length] + Phaser.Math.Between(-12, 12);
+      const targetY = 666 - (index % 2) * 8;
+      person.behaviorMovingToDoor = true;
+      person.behaviorDoorTween = this.tweens.add({
+        targets: person,
+        x: targetX,
+        y: targetY,
+        duration: 600,
+        ease: "Sine.easeInOut",
+        onComplete: () => {
+          person.behaviorMovingToDoor = false;
+          person.behaviorDoorTween = null;
+        }
+      });
+    });
+    stop.pacingMoved = true;
+  }
+
+  makeOncomingTrams() {
+    const spawnPositions = [WIDTH + 1200];
+    return Array.from({ length: 1 }, (_, index) => {
+      const container = this.add.container(spawnPositions[index], 548).setDepth(9).setAlpha(0.82);
+      const lead = this.add.sprite(0, 0, "tram-konstal").setOrigin(0.5, 0.91).setFlipX(true);
+      const rear = this.add.sprite(286, 0, "tram-konstal").setOrigin(0.5, 0.91).setFlipX(true);
+      const coupler = this.add.rectangle(143, -26, 22, 5, 0x12181d, 0.9).setOrigin(0.5);
+      const headlights = [
+        this.add.rectangle(-92, 14, 8, 4, 0xffe08a, this.mode.night ? 0.9 : 0),
+        this.add.rectangle(-92, 24, 8, 4, 0xffe08a, this.mode.night ? 0.9 : 0)
+      ];
+      container.add([lead, rear, coupler, ...headlights]);
+      const tram = {
+        container,
+        lead,
+        rear,
+        coupler,
+        headlights,
+        type: "konstal",
+        ownSpeed: Phaser.Math.Between(60, 120),
+        wobble: Phaser.Math.FloatBetween(0, Math.PI * 2),
+        closeShakeArmed: false,
+        whooshArmed: false
+      };
+      this.configureOncomingTram(tram, true);
+      return tram;
+    });
+  }
+
+  getOncomingTramGapRange() {
+    if (this.currentBg === "centrum" || this.currentBg === "piotrkowska") return [5200, 8200];
+    if (this.currentBg === "zarzew" || this.currentBg === "teofilow") return [7600, 11800];
+    return [6200, 9800];
+  }
+
+  configureOncomingTram(tram, initial = false) {
+    const isKonstal = Phaser.Math.Between(0, 1) === 0;
+    const tint = (this.districtProfile || DISTRICT_PROFILES.zarzew).tint;
+    tram.type = isKonstal ? "konstal" : "pesa";
+    tram.ownSpeed = Phaser.Math.Between(60, 120);
+    tram.wobble = Phaser.Math.FloatBetween(0, Math.PI * 2);
+    tram.closeShakeArmed = false;
+    tram.whooshArmed = false;
+    tram.container.setAlpha(0.82);
+    tram.container.y = 548;
+    tram.lead.setTexture(isKonstal ? "tram-konstal" : "tram-pesa");
+    tram.lead.setScale(isKonstal ? 0.22 : 0.28);
+    tram.lead.setFlipX(true);
+    tram.lead.setTint(tint);
+    tram.rear.setVisible(isKonstal);
+    tram.rear.setTexture("tram-konstal");
+    tram.rear.setScale(0.22);
+    tram.rear.setFlipX(true);
+    tram.rear.setTint(tint);
+    tram.rear.x = 286;
+    tram.coupler.setVisible(isKonstal);
+    tram.coupler.x = 143;
+    tram.headlights.forEach((light, index) => {
+      light.setVisible(this.mode.night);
+      light.setAlpha(this.mode.night ? 0.9 : 0);
+      light.x = -92 + index * 10;
+    });
+    tram.container.x = initial ? WIDTH + Phaser.Math.Between(1800, 3600) : WIDTH + Phaser.Math.Between(...this.getOncomingTramGapRange());
+    tram.container.setVisible(true);
+  }
+
+  updateOncomingTrams(dt) {
+    if (!this.oncomingTrams) return;
+    const tint = (this.districtProfile || DISTRICT_PROFILES.zarzew).tint;
+    const playerScroll = this.speed * dt * 0.35;
+    this.oncomingTrams.forEach((tram, index) => {
+      tram.container.x -= tram.ownSpeed * dt + playerScroll;
+      tram.container.y = 548 + Math.sin(this.time.now * 0.002 + tram.wobble + index) * 1.2;
+      tram.lead.setTint(tint);
+      tram.rear.setTint(tint);
+      tram.headlights.forEach((light) => {
+        light.setVisible(this.mode.night);
+        light.setAlpha(this.mode.night ? 0.9 : 0);
+      });
+
+      const centerDistance = Math.abs(tram.container.x - WIDTH / 2);
+      if (centerDistance < 200 && !tram.closeShakeArmed) {
+        tram.closeShakeArmed = true;
+        this.cameras.main.shake(120, 0.001);
+      }
+      if (centerDistance > 260) tram.closeShakeArmed = false;
+
+      if (centerDistance < 300 && !tram.whooshArmed) {
+        tram.whooshArmed = true;
+        this.playTramWhoosh();
+      }
+      if (centerDistance > 360) tram.whooshArmed = false;
+
+      if (tram.container.x < -720) {
+        this.configureOncomingTram(tram);
+        tram.container.x = WIDTH + Phaser.Math.Between(...this.getOncomingTramGapRange());
+      }
+    });
+  }
+
+  makeWeatherEffects() {
+    const rainIntensity = this.getWeatherRainIntensity();
+    const rainDrops = Array.from({ length: 40 }, (_, index) => {
+      const drop = this.add.rectangle(
+        Phaser.Math.Between(0, WIDTH),
+        Phaser.Math.Between(-HEIGHT, HEIGHT),
+        2,
+        8,
+        0xe8f5ff,
+        0.24
+      ).setOrigin(0.5).setDepth(50);
+      drop.baseAlpha = Phaser.Math.FloatBetween(0.2, 0.3);
+      drop.vx = Phaser.Math.FloatBetween(40, 80);
+      drop.vy = Phaser.Math.FloatBetween(320, 480);
+      drop.phase = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      drop.wrapOffset = index * 13;
+      drop.setRotation(-0.35);
+      return drop;
+    });
+    const leaves = Array.from({ length: 8 }, (_, index) => {
+      const leaf = this.add.ellipse(
+        Phaser.Math.Between(0, WIDTH),
+        Phaser.Math.Between(120, HEIGHT - 60),
+        6,
+        3,
+        index % 2 ? 0x6a8b43 : 0x8e6a3a,
+        0.28
+      ).setOrigin(0.5).setDepth(15);
+      leaf.baseAlpha = Phaser.Math.FloatBetween(0.2, 0.35);
+      leaf.vx = Phaser.Math.FloatBetween(16, 34) * (index % 2 ? -1 : 1);
+      leaf.vy = Phaser.Math.FloatBetween(4, 14);
+      leaf.phase = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      leaf.scaleBase = Phaser.Math.FloatBetween(0.92, 1.22);
+      return leaf;
+    });
+    rainDrops.forEach((drop) => drop.setAlpha(drop.baseAlpha * rainIntensity));
+    leaves.forEach((leaf) => leaf.setAlpha(leaf.baseAlpha * this.getWeatherLeafVisibility()));
+    this.weatherEffects = {
+      rainDrops,
+      leaves,
+      sparks: [],
+      rainIntensity,
+      nextSparkAt: this.time.now + Phaser.Math.Between(3000, 8000),
+      nextClatterAt: this.time.now + Phaser.Math.Between(400, 800)
+    };
+    return this.weatherEffects;
+  }
+
+  getWeatherRainIntensity() {
+    if (this.mode.night) return 0;
+    if (this.currentBg === "centrum" || this.currentBg === "widzew") return 1.0;
+    if (this.currentBg === "piotrkowska") return 0.9;
+    if (this.currentBg === "teofilow") return 0.3;
+    return 0.58;
+  }
+
+  getWeatherLeafVisibility() {
+    const districtFactor = this.currentBg === "zarzew" || this.currentBg === "teofilow" ? 1 : 0.6;
+    return this.mode.night ? 0.18 : districtFactor;
+  }
+
+  spawnPantographSparkBurst() {
+    if (!this.weatherEffects) return;
+    const sparkCount = Phaser.Math.Between(4, 6);
+    const intensity = this.mode.night ? 0.9 : 0.4;
+    for (let i = 0; i < sparkCount; i += 1) {
+      const spark = this.add.rectangle(
+        this.tram.x + Phaser.Math.Between(-18, 18),
+        414 + Phaser.Math.Between(-8, 6),
+        2,
+        2,
+        i % 2 ? 0xf4d35e : 0xffffff,
+        intensity
+      ).setOrigin(0.5).setDepth(22);
+      const vx = Phaser.Math.Between(-90, 90);
+      const vy = Phaser.Math.Between(-40, -130);
+      this.weatherEffects.sparks.push(spark);
+      this.tweens.add({
+        targets: spark,
+        x: spark.x + vx,
+        y: spark.y + vy,
+        alpha: 0,
+        duration: Phaser.Math.Between(200, 400),
+        ease: "Sine.easeOut",
+        onComplete: () => {
+          const idx = this.weatherEffects?.sparks?.indexOf(spark) ?? -1;
+          if (idx >= 0) this.weatherEffects.sparks.splice(idx, 1);
+          spark.destroy();
+        }
+      });
+    }
+  }
+
+  updateWeatherEffects(dt) {
+    if (!this.weatherEffects) return;
+    this.weatherEffects.rainIntensity = this.getWeatherRainIntensity();
+    const intensity = this.weatherEffects.rainIntensity;
+    const leafVisibility = this.getWeatherLeafVisibility();
+    this.weatherEffects.rainDrops.forEach((drop, index) => {
+      drop.x -= drop.vx * dt;
+      drop.y += drop.vy * dt;
+      drop.setAlpha(drop.baseAlpha * intensity * 1.05);
+      if (drop.y > HEIGHT + 12 || drop.x < -16) {
+        drop.x = Phaser.Math.Between(WIDTH - 120, WIDTH + 180);
+        drop.y = Phaser.Math.Between(-140, -10) - index * 2;
+        drop.vx = Phaser.Math.FloatBetween(40, 80);
+        drop.vy = Phaser.Math.FloatBetween(320, 480);
+      }
+    });
+
+    this.weatherEffects.leaves.forEach((leaf, index) => {
+      leaf.x -= this.speed * dt * 0.04 + leaf.vx * dt;
+      leaf.y += Math.sin(this.time.now * 0.0018 + leaf.phase + index) * 0.45 + leaf.vy * dt * 0.12;
+      leaf.rotation = Math.sin(this.time.now * 0.003 + leaf.phase) * 0.5;
+      leaf.scaleX = leaf.scaleBase * 1.12;
+      leaf.scaleY = leaf.scaleBase * 0.62;
+      leaf.setAlpha(leaf.baseAlpha * leafVisibility * 1.1);
+      if (leaf.x < -30) {
+        leaf.x = WIDTH + Phaser.Math.Between(30, 180);
+        leaf.y = Phaser.Math.Between(120, HEIGHT - 60);
+      }
+    });
+
+    if (this.time.now > this.weatherEffects.nextSparkAt) {
+      const speedBoost = Phaser.Math.Clamp(this.speed / this.vehicle.maxSpeed, 0, 1);
+      if (speedBoost > 0.6 || (this.mode.night && speedBoost > 0.18)) this.spawnPantographSparkBurst();
+      const nextDelay = Phaser.Math.Between(3000, 8000) - Math.round(speedBoost * 1800);
+      this.weatherEffects.nextSparkAt = this.time.now + Math.max(3000, nextDelay);
+    }
+  }
+
+  createOdometerHud() {
+    const panelY = this.touchLayer?.visible ? HEIGHT - 116 : HEIGHT - 72;
+    this.odometerPanel = this.add.rectangle(16, panelY, 246, 56, 0x0d1318, 0.92)
+      .setOrigin(0, 1)
+      .setStrokeStyle(2, 0x4b5961, 0.95)
+      .setDepth(100);
+    this.odometerLabel = this.add.text(28, panelY - 42, "DYSTANS", {
+      fontSize: "10px",
+      fontStyle: "700",
+      color: "#8ea0a8"
+    }).setDepth(101);
+    this.odometerText = this.add.text(28, panelY - 26, "0.0 km", {
+      fontSize: "20px",
+      fontStyle: "700",
+      color: "#f4efe4",
+      fontFamily: "\"Courier New\", monospace"
+    }).setDepth(101);
+    this.speedometerLabel = this.add.text(180, panelY - 42, "PRĘDKOŚĆ", {
+      fontSize: "10px",
+      fontStyle: "700",
+      color: "#8ea0a8"
+    }).setDepth(101);
+    this.speedometerText = this.add.text(180, panelY - 22, "0 km/h", {
+      fontSize: "16px",
+      fontStyle: "700",
+      color: "#50d2c2",
+      fontFamily: "\"Courier New\", monospace"
+    }).setDepth(101);
+    this.speedometerGraphics = this.add.graphics().setDepth(100);
+    this.speedometerNeedle = this.add.graphics().setDepth(101);
+    this.updateOdometerHud();
+  }
+
+  updateOdometerHud() {
+    if (!this.odometerPanel || !this.speedometerGraphics || !this.speedometerNeedle) return;
+    const panelY = this.touchLayer?.visible ? HEIGHT - 116 : HEIGHT - 72;
+    const panelX = 16;
+    this.odometerPanel.setPosition(panelX, panelY);
+    this.odometerLabel.setPosition(panelX + 12, panelY - 42);
+    this.odometerText.setPosition(panelX + 12, panelY - 26);
+    this.speedometerLabel.setPosition(panelX + 164, panelY - 42);
+    this.speedometerText.setPosition(panelX + 164, panelY - 22);
+
+    const centerX = panelX + 208;
+    const centerY = panelY - 18;
+    const radius = 28;
+    const safeSpeed = this.vehicle.maxSpeed * this.trackCondition * this.vehicle.handling * this.mode.speedAllowance;
+    const speedRatio = Phaser.Math.Clamp(this.toDisplaySpeed(this.speed) / Math.max(1, this.vehicle.displayMaxSpeed), 0, 1);
+    const color = this.speed <= safeSpeed ? 0x50d2c2 : this.speed <= safeSpeed * 1.05 ? 0xf4d35e : 0xff5c8a;
+    const angle = Math.PI - speedRatio * Math.PI;
+
+    this.odometerText.setText(this.formatRouteDistance(this.distance));
+    this.speedometerText.setText(`${Math.round(this.toDisplaySpeed(this.speed))} km/h`);
+    this.speedometerText.setColor(color === 0x50d2c2 ? "#50d2c2" : color === 0xf4d35e ? "#f4d35e" : "#ff5c8a");
+
+    this.speedometerGraphics.clear();
+    this.speedometerGraphics.lineStyle(2, 0x26323a, 1);
+    this.speedometerGraphics.beginPath();
+    this.speedometerGraphics.arc(centerX, centerY, radius, Math.PI, 0, false);
+    this.speedometerGraphics.strokePath();
+    this.speedometerGraphics.lineStyle(1, 0x4b5961, 0.9);
+    this.speedometerGraphics.strokeCircle(centerX, centerY, radius - 8);
+
+    this.speedometerNeedle.clear();
+    this.speedometerNeedle.lineStyle(3, color, 1);
+    this.speedometerNeedle.beginPath();
+    this.speedometerNeedle.moveTo(centerX, centerY);
+    this.speedometerNeedle.lineTo(centerX + Math.cos(angle) * (radius - 5), centerY - Math.sin(angle) * (radius - 5));
+    this.speedometerNeedle.strokePath();
+    this.speedometerNeedle.fillStyle(color, 1);
+    this.speedometerNeedle.fillCircle(centerX, centerY, 3);
   }
 
   createNightLayer() {
@@ -1378,18 +1806,29 @@ export class GameScene extends Phaser.Scene {
       this.nextDispatchAt = this.time.now + Phaser.Math.Between(7000, 10500);
     }
     const active = this.time.now < this.dispatchUntil;
-    this.dispatchBg.setVisible(active);
+    this.dispatchBg.setVisible(false);
     this.dispatchText.setVisible(active);
-    this.dispatchBg.setAlpha(active ? 0.9 : 0);
-    this.dispatchText.setAlpha(active ? 1 : 0);
+    this.dispatchBg.setAlpha(0);
+    this.dispatchText.setAlpha(active ? 0.9 : 0);
   }
 
   dispatch(text, duration = 4300) {
     if (!text || text === this.lastDispatchText) return;
     this.lastDispatchText = text;
     this.dispatchText.setText(text);
-    this.fitText(this.dispatchText, 360, 11, 8);
+    this.fitText(this.dispatchText, 376, 8, 7);
     this.dispatchUntil = this.time.now + duration;
+  }
+
+  showRouteMoment(text, duration = 3300, color = "#f4d35e") {
+    if (!text || !this.routeMomentText || this.time.now < this.routeMomentUntil - 450 || this.time.now < this.messageUntil) return;
+    this.routeMomentText.setText(text);
+    this.routeMomentText.setColor(color);
+    this.routeMomentBg.setVisible(true);
+    this.routeMomentText.setVisible(true);
+    this.routeMomentBg.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(color).color, 0.75);
+    this.fitText(this.routeMomentText, 600, 11, 8);
+    this.routeMomentUntil = this.time.now + duration;
   }
 
   updateRouteMoments() {
@@ -1399,7 +1838,7 @@ export class GameScene extends Phaser.Scene {
       if (relative < 680 && relative > 120) {
         this.routeMomentsShown.add(moment.id);
         this.dispatch(`Dyspozytor: ${moment.text}`, 5400);
-        this.showMessage(moment.text, 1800, moment.color, MESSAGE_PRIORITY.info);
+        this.showRouteMoment(moment.text, 3600, moment.color);
       }
     });
   }
@@ -1494,6 +1933,14 @@ export class GameScene extends Phaser.Scene {
       { type: "landmark", key: "landmark-smolarek-mural", distance: Math.round(3.46 * ROUTE_SCALE), y: 536, scale: 0.32, depth: 10 },
       { type: "landmark", key: "landmark-witcher-mural", distance: Math.round(7.3 * ROUTE_SCALE), y: 536, scale: 0.31, depth: 10 },
       { type: "landmark", key: "landmark-unicorn-statue", distance: Math.round(7.78 * ROUTE_SCALE), y: 530, scale: 0.36, depth: 13 },
+      { type: "sign", distance: Math.round(0.32 * ROUTE_SCALE), y: 504, label: "ZARZEW\nSPOKOJNIE", depth: 13 },
+      { type: "sign", distance: Math.round(2.22 * ROUTE_SCALE), y: 500, label: "ROKICINSKA\nTRZYMAJ TOR", depth: 13 },
+      { type: "sign", distance: Math.round(3.62 * ROUTE_SCALE), y: 502, label: "WIDZEW\nCALA NAPRZOD", depth: 14 },
+      { type: "sign", distance: Math.round(4.72 * ROUTE_SCALE), y: 506, label: "WI-MA\nFABRYKA RYTMU", depth: 13 },
+      { type: "sign", distance: Math.round(6.72 * ROUTE_SCALE), y: 498, label: "HOLLY\nLODZ", depth: 13 },
+      { type: "sign", distance: Math.round(8.16 * ROUTE_SCALE), y: 500, label: "STAJNIA\nJEDNOROZCOW", depth: 13 },
+      { type: "sign", distance: Math.round(9.52 * ROUTE_SCALE), y: 502, label: "KALISKA\nNIE PRZESTRZEL", depth: 13 },
+      { type: "sign", distance: Math.round(14.85 * ROUTE_SCALE), y: 506, label: "TEOFILOW\nJUZ BLISKO", depth: 13 },
       { type: "gate", offset: 2500, y: 492, label: "BRAMA" },
       { type: "generated", key: "lodz-detail-cafe", offset: 3380, y: 502, scale: 0.15 },
       { type: "generated", key: "lodz-detail-mural", offset: 4260, y: 496, scale: 0.16 },
@@ -1530,7 +1977,7 @@ export class GameScene extends Phaser.Scene {
       } else {
         const fill = def.type === "lcn" ? 0x1b7c53 : 0x1f2630;
         group.add(this.add.rectangle(0, def.y - 52, 132, 56, fill, 0.9).setStrokeStyle(3, 0x111319, 1));
-        group.add(this.add.text(0, def.y - 64, def.label, { fontSize: def.type === "lcn" ? "13px" : "12px", color: def.type === "lcn" ? "#f4efe4" : "#f4d35e", fontStyle: "700", align: "center" }).setOrigin(0.5));
+        group.add(this.add.text(0, def.y - 64, def.label, { fontSize: def.type === "lcn" ? "13px" : "11px", color: def.type === "lcn" ? "#f4efe4" : "#f4d35e", fontStyle: "700", align: "center", lineSpacing: -2 }).setOrigin(0.5));
         group.add(this.add.rectangle(-48, def.y - 24, 8, 48, 0x2a3238, 1));
         group.add(this.add.rectangle(48, def.y - 24, 8, 48, 0x2a3238, 1));
       }
@@ -1719,50 +2166,54 @@ export class GameScene extends Phaser.Scene {
     this.clockText.setText(this.formatTime(this.timeLeft));
     this.scoreText.setText(`SCORE: ${this.currentScore()}`);
     this.nextText.setText(next ? `NEXT: ${this.shortLabel(next.name, 22)}\n${this.shortLabel(next.street, 18)} | ${this.formatRouteDistance(remainingToStop)}` : `FINISH\nPax ${Math.round(this.passengers)}`);
-    this.signalText.setText(nextSignal ? `Signal ${nextSignal.state.toUpperCase()} | ${this.formatRouteDistance(nextSignal.distance - this.distance)}` : "Signal clear");
+    this.signalText.setText(nextSignal ? `Signal ${nextSignal.state.toUpperCase()} | ${this.formatRouteDistance(nextSignal.distance - this.distance)}` : "");
     this.scheduleText.setText(`Rozklad ${this.formatScheduleDelta(scheduleDelta)} | Punkt. ${Math.round(this.punctuality)}%`);
     this.scheduleText.setColor(Math.abs(scheduleDelta) <= 18 ? "#50d2c2" : scheduleDelta > 0 ? "#ffb22e" : "#8fb7e8");
     this.speedText.setText(`Pred ${Math.round(this.toDisplaySpeed(this.speed))}/${Math.round(this.toDisplaySpeed(safeSpeed))} km/h | Drzwi ${this.doorsOpen ? "OPEN" : "CLOSED"}`);
-    this.trackText.setText(`Tor ${Math.round(this.trackCondition * 100)}% | Zad ${Math.round(this.satisfaction)}% | Plyn ${Math.round(this.smoothness)}%`);
-    this.passengerText.setText(`Pax ${Math.round(this.passengers)} | Dow ${this.delivered} | Combo x${this.combo.toFixed(2)}`);
+    this.trackText.setText(`Tor ${Math.round(this.trackCondition * 100)}%`);
+    this.passengerText.setText(`Pax ${Math.round(this.passengers)} | Dow ${this.delivered}`);
     const switchText = `Zwrotnica ${this.switchChoice === "straight" ? "PROSTO(E)" : "SKRET(Q)"}`;
     this.brakeText.setText(recommended === null ? `${switchText} | Rating ${this.stopRating}` : `Hamuj do ${Math.round(this.toDisplaySpeed(recommended))} km/h | ${switchText}`);
-    this.modeBadgeText.setText(`${this.mode.label} | Ruch x${this.mode.traffic.toFixed(2)}`);
+    this.modeBadgeText.setText(this.mode.label);
     const showSwitch = Boolean(nextSwitch && nextSwitch.distance - this.distance < 1100);
-    this.nextSwitchText.setText(showSwitch ? `Zwrotnica za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}: ${nextSwitch.correct === "left" ? "Q SKRET" : "E PROSTO"}` : "");
+    this.nextSwitchText.setText(showSwitch ? `Za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}: ${nextSwitch.correct === "left" ? "Q SKRET" : "E PROSTO"}` : "");
     const recentFeedback = this.feedbackReasons
       .filter((item) => this.time.now - item.time < 5200)
       .slice(0, 1);
     this.feedbackText.setText(recentFeedback.length ? `Feedback: ${recentFeedback[0].text}` : "");
     this.feedbackText.setColor(recentFeedback[0]?.color || "#8ea0a8");
     this.nextSwitchText.setVisible(showSwitch);
-    this.modeBadgeText.setVisible(showSwitch);
-    this.modeBadgeBg.setVisible(showSwitch);
-    this.feedbackText.setVisible(Boolean(recentFeedback.length));
-    this.feedbackBg.setVisible(Boolean(recentFeedback.length));
-    this.feedbackBg.y = showSwitch ? 274 : 214;
-    this.feedbackText.y = showSwitch ? 286 : 228;
-    this.fitText(this.nextText, 354, 11, 8);
-    this.fitText(this.signalText, 354, 10, 8);
-    this.fitText(this.scheduleText, 354, 10, 8);
-    this.fitText(this.speedText, 390, 14, 11);
-    this.fitText(this.trackText, 390, 12, 10);
-    this.fitText(this.passengerText, 390, 12, 10);
-    this.fitText(this.brakeText, 390, 12, 10);
-    this.fitText(this.modeBadgeText, 374, 11, 9);
-    this.fitText(this.nextSwitchText, 374, 10, 8);
-    this.fitText(this.feedbackText, 374, 10, 8);
-    this.throttleFill.width = 140 * this.throttle;
-    this.condFill.width = 140 * this.trackCondition;
+    this.brakeText.setVisible(Boolean(showSwitch || recommended !== null));
+    this.modeBadgeBg.setVisible(false);
+    this.feedbackText.setVisible(false);
+    this.feedbackBg.setVisible(false);
+    this.fitText(this.nextText, 388, 11, 8);
+    this.fitText(this.signalText, 136, 9, 8);
+    this.fitText(this.scheduleText, 360, 9, 8);
+    this.fitText(this.speedText, 216, 11, 9);
+    this.fitText(this.trackText, 130, 9, 8);
+    this.fitText(this.passengerText, 130, 9, 8);
+    this.fitText(this.brakeText, 210, 8, 7);
+    this.fitText(this.modeBadgeText, 318, 12, 9);
+    this.fitText(this.nextSwitchText, 132, 8, 7);
+    this.fitText(this.feedbackText, 318, 8, 7);
+    this.throttleFill.width = 132 * this.throttle;
+    this.condFill.width = 132 * this.trackCondition;
     this.condFill.setFillStyle(this.trackCondition < 0.5 ? 0xff5c8a : 0x50d2c2);
-    this.progressFill.width = Phaser.Math.Clamp((this.distance / ROUTE_END_DISTANCE) * 860, 0, 860);
+    this.progressFill.width = Phaser.Math.Clamp((this.distance / ROUTE_END_DISTANCE) * this.progressWidth, 0, this.progressWidth);
 
     if (this.timeLeft < 25 && !this.warningText.text.includes("CZAS")) {
       this.showMessage("TIME RUNNING OUT!", 500, "#ffb22e", MESSAGE_PRIORITY.warning);
     }
     if (this.time.now > this.messageUntil) {
       this.warningText.setText("");
+      this.warningBg?.setVisible(false);
       this.messagePriority = MESSAGE_PRIORITY.ambient;
+    }
+    if (this.time.now > this.routeMomentUntil) {
+      this.routeMomentText?.setText("");
+      this.routeMomentBg?.setVisible(false);
+      this.routeMomentText?.setVisible(false);
     }
   }
 
@@ -1781,7 +2232,7 @@ export class GameScene extends Phaser.Scene {
         this.finishBonusApplied = true;
       }
       this.playCue("finish");
-      this.endScreen(missed ? "Teofilow z brakami" : "Teofilow osiagniety", this.buildEndReport(Math.max(0, bonus), false));
+      this.endScreen(missed ? "Teofilow z brakami" : "Krancowka Teofilow", this.buildEndReport(Math.max(0, bonus), false));
     }
   }
 
@@ -2038,8 +2489,14 @@ export class GameScene extends Phaser.Scene {
   showMessage(text, duration = 1200, color = "#f4d35e", priority = null) {
     const nextPriority = priority ?? this.messagePriorityForColor(color);
     if (this.time.now < this.messageUntil && nextPriority < this.messagePriority) return;
+    this.routeMomentText?.setText("");
+    this.routeMomentBg?.setVisible(false);
+    this.routeMomentText?.setVisible(false);
+    this.routeMomentUntil = 0;
     this.warningText.setText(text);
     this.warningText.setColor(color);
+    this.warningBg?.setVisible(true);
+    this.warningBg?.setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(color).color, 0.9);
     this.messageUntil = Math.max(this.time.now + duration, this.messageUntil && nextPriority === this.messagePriority ? this.messageUntil : 0);
     this.messagePriority = nextPriority;
   }
@@ -2193,10 +2650,10 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  playTone(ctx, frequency, start, duration, volume) {
+  playTone(ctx, frequency, start, duration, volume, oscillatorType = "square") {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = "square";
+    osc.type = oscillatorType;
     osc.frequency.setValueAtTime(frequency, start);
     gain.gain.setValueAtTime(0.0001, start);
     gain.gain.exponentialRampToValueAtTime(volume, start + 0.01);
@@ -2205,6 +2662,179 @@ export class GameScene extends Phaser.Scene {
     gain.connect(ctx.destination);
     osc.start(start);
     osc.stop(start + duration + 0.02);
+  }
+
+  createAmbientAudio() {
+    const ctx = this.ensureAudio();
+    if (!ctx) return;
+    const humFilter = ctx.createBiquadFilter();
+    humFilter.type = "lowpass";
+    humFilter.frequency.value = 200;
+    const humGain = ctx.createGain();
+    humGain.gain.value = 0;
+    const humOsc = ctx.createOscillator();
+    humOsc.type = "triangle";
+    humOsc.frequency.value = 96;
+    humOsc.connect(humFilter);
+    humFilter.connect(humGain);
+    humGain.connect(ctx.destination);
+    humOsc.start();
+    this.ambientAudio = {
+      ctx,
+      humOsc,
+      humFilter,
+      humGain,
+      noiseBuffer: this.createNoiseBuffer(ctx, 1)
+    };
+    this.updateAmbientAudio(0);
+  }
+
+  createNoiseBuffer(ctx, durationSeconds = 1) {
+    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * durationSeconds)), ctx.sampleRate);
+    const channel = buffer.getChannelData(0);
+    for (let i = 0; i < channel.length; i += 1) {
+      channel[i] = (Math.random() * 2) - 1;
+    }
+    return buffer;
+  }
+
+  playStationChime() {
+    const ctx = this.ensureAudio();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    const start = ctx.currentTime;
+    this.playTone(ctx, 440, start, 0.12, 0.04, "triangle");
+    this.playTone(ctx, 554, start + 0.11, 0.12, 0.04, "triangle");
+  }
+
+  playTrackClatter(speedRatio) {
+    const ctx = this.ensureAudio();
+    if (!ctx || !this.ambientAudio) return;
+    if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    const start = ctx.currentTime;
+    const source = ctx.createBufferSource();
+    source.buffer = this.ambientAudio.noiseBuffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 1200 + speedRatio * 900;
+    filter.Q.value = 4;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(Math.min(0.025, 0.006 + speedRatio * 0.019), start + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.09);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(start);
+    source.stop(start + 0.1);
+  }
+
+  playTramWhoosh() {
+    const ctx = this.ensureAudio();
+    if (!ctx || !this.ambientAudio) return;
+    if (this.time.now - this.lastAmbientWhooshAt < 1000) return;
+    this.lastAmbientWhooshAt = this.time.now;
+    if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    const start = ctx.currentTime;
+    const source = ctx.createBufferSource();
+    source.buffer = this.ambientAudio.noiseBuffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(800, start);
+    filter.frequency.exponentialRampToValueAtTime(200, start + 0.18);
+    filter.Q.value = 2.6;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.06, start + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(start);
+    source.stop(start + 0.2);
+  }
+
+  updateAmbientAudio(dt, mute = false) {
+    if (!this.ambientAudio || !this.audioContext) return;
+    const ctx = this.ambientAudio.ctx;
+    const profile = this.districtProfile || DISTRICT_PROFILES.zarzew;
+    const traffic = Phaser.Math.Clamp(profile.traffic, 0.45, 1.8);
+    const targetGain = mute ? 0 : Phaser.Math.Clamp(0.015 + traffic * 0.012, 0, 0.035);
+    const targetFreq = 85 + traffic * 12;
+    this.ambientAudio.humOsc.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.08);
+    this.ambientAudio.humFilter.frequency.setTargetAtTime(200 + traffic * 60, ctx.currentTime, 0.12);
+    this.ambientAudio.humGain.gain.setTargetAtTime(targetGain, ctx.currentTime, 0.1);
+
+    if (mute) return;
+
+    const nextStop = this.activeStop();
+    if (nextStop && !nextStop.served && !this.ambientAnnouncedStops.has(nextStop.id) && nextStop.distance - this.distance < 600 && nextStop.distance - this.distance > -140) {
+      this.ambientAnnouncedStops.add(nextStop.id);
+      this.playStationChime();
+      this.showRouteMoment(`Nastepny przystanek: ${nextStop.name}`, 2600, "#8fb7e8");
+    }
+
+    if (this.speed > this.vehicle.maxSpeed * 0.3 && this.time.now > this.nextAmbientClatterAt) {
+      const speedRatio = Phaser.Math.Clamp(this.speed / this.vehicle.maxSpeed, 0, 1);
+      this.playTrackClatter(speedRatio);
+      const interval = Phaser.Math.Linear(0.8, 0.4, Phaser.Math.Clamp((speedRatio - 0.3) / 0.7, 0, 1));
+      this.nextAmbientClatterAt = this.time.now + interval * 1000 + Phaser.Math.Between(0, 80);
+      this.lastAmbientClatterAt = this.time.now;
+    }
+  }
+
+  cleanupAmbientAudio() {
+    if (!this.ambientAudio) return;
+    try {
+      this.ambientAudio.humOsc.stop();
+    } catch (_) {}
+    try {
+      this.ambientAudio.humOsc.disconnect();
+    } catch (_) {}
+    try {
+      this.ambientAudio.humFilter.disconnect();
+    } catch (_) {}
+    try {
+      this.ambientAudio.humGain.disconnect();
+    } catch (_) {}
+    this.ambientAudio = null;
+  }
+
+  cleanupScene() {
+    this.stopRideLoop();
+    this.stopStadiumMusic();
+    this.cleanupAmbientAudio();
+    this.destroyOncomingTrams();
+    this.destroyWeatherEffects();
+    this.destroyOdometerHud();
+  }
+
+  destroyOncomingTrams() {
+    if (!this.oncomingTrams) return;
+    this.oncomingTrams.forEach((tram) => {
+      tram.container?.destroy();
+    });
+    this.oncomingTrams = [];
+  }
+
+  destroyWeatherEffects() {
+    if (!this.weatherEffects) return;
+    this.weatherEffects.rainDrops?.forEach((drop) => drop.destroy());
+    this.weatherEffects.leaves?.forEach((leaf) => leaf.destroy());
+    this.weatherEffects.sparks?.forEach((spark) => spark.destroy());
+    this.weatherEffects = null;
+  }
+
+  destroyOdometerHud() {
+    [
+      this.odometerPanel,
+      this.odometerLabel,
+      this.odometerText,
+      this.speedometerLabel,
+      this.speedometerText,
+      this.speedometerGraphics,
+      this.speedometerNeedle
+    ].forEach((item) => item?.destroy());
   }
 
   gameOver(reason) {
@@ -2265,6 +2895,26 @@ export class GameScene extends Phaser.Scene {
       strokeThickness: 4,
       align: "center"
     }).setOrigin(0.5));
+
+    if (title !== "Kurs przerwany") {
+      layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 190, "Dyspozytor: dobra robota, sklad na petli.", {
+        fontSize: "13px",
+        fontStyle: "700",
+        color: "#50d2c2",
+        align: "center"
+      }).setOrigin(0.5));
+      for (let i = 0; i < 28; i += 1) {
+        const confetti = this.add.rectangle(
+          WIDTH / 2 - 390 + i * 29,
+          HEIGHT / 2 - 232 + Phaser.Math.Between(-8, 14),
+          5,
+          9,
+          i % 3 === 0 ? 0xf4d35e : i % 3 === 1 ? 0x50d2c2 : 0xffb22e,
+          0.82
+        ).setRotation(Phaser.Math.FloatBetween(-0.6, 0.6));
+        layer.add(confetti);
+      }
+    }
 
     layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 166, `SCORE: ${finalScore}`, {
       fontSize: "28px",
@@ -2445,4 +3095,3 @@ export class GameScene extends Phaser.Scene {
     return history;
   }
 }
-

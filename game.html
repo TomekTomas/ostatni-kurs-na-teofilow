@@ -12,25 +12,28 @@
       .back-to-landing {
         position: fixed;
         z-index: 3000;
-        top: max(12px, env(safe-area-inset-top));
+        top: auto;
+        bottom: max(12px, env(safe-area-inset-bottom));
         left: max(12px, env(safe-area-inset-left));
         display: inline-flex;
         align-items: center;
-        min-height: 38px;
-        padding: 0 14px;
+        min-height: 30px;
+        padding: 0 10px;
         border: 2px solid rgba(255, 178, 46, 0.78);
         border-radius: 6px;
         background: rgba(16, 19, 26, 0.86);
         color: #ffffff;
-        font: 700 13px "Lexend Deca", "Segoe UI", Arial, sans-serif;
+        font: 700 11px "Lexend Deca", "Segoe UI", Arial, sans-serif;
         text-decoration: none;
         letter-spacing: 0;
+        opacity: 0.5;
       }
       .back-to-landing:focus-visible,
       .back-to-landing:hover {
         background: #ffb22e;
         color: #10131a;
         outline: none;
+        opacity: 1;
       }
     </style>
   </head>

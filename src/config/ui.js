@@ -24,9 +24,8 @@ export const UI_ASSETS = [
 export const WIDZEW_STADIUM_MUSIC = {
   stopId: "widzew-stadion",
   sources: ["assets/audio/taniec-eleny.ogg", "assets/audio/taniec-eleny.mp3"],
-  before: Math.round(0.28 * ROUTE_SCALE),
-  after: Math.round(0.32 * ROUTE_SCALE),
+  before: Math.round(0.035 * ROUTE_SCALE),
+  after: Math.round(0.035 * ROUTE_SCALE),
   volume: 0.22,
-  fadeSpeed: 1.8
+  fadeSpeed: 3.4
 };
-

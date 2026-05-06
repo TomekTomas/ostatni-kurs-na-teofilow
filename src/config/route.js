@@ -105,9 +105,20 @@ export const LCN_BILLBOARDS = [
 ];
 
 export const ROUTE_MOMENTS = [
+  { id: "zarzew-cemetery", distance: Math.round(0.18 * ROUTE_SCALE), text: "Zarzew: spokojny start przy cmentarzu, nie szarp nastawnikiem.", color: "#d9d3c4" },
+  { id: "sybirakow-roundabout", distance: Math.round(1.12 * ROUTE_SCALE), text: "Rondo Sybirakow: ciasny rytm przystankow, lepiej hamowac wczesniej.", color: "#f4d35e" },
+  { id: "rokicinska-track", distance: Math.round(2.55 * ROUTE_SCALE), text: "Rokicinska: tor potrafi podrzucic, trzymaj spokojny przelot.", color: "#8fb7e8" },
   { id: "widzew-crowd", distance: Math.round(3.22 * ROUTE_SCALE), text: "Stadion po prawej: spodziewaj sie tlumu i pilnuj czerwonego.", color: "#ffb22e" },
+  { id: "widzew-good-run", distance: Math.round(3.52 * ROUTE_SCALE), text: "Widzew Stadion: czysty przejazd tutaj smakuje jak wygrany mecz.", color: "#ffb22e" },
+  { id: "wima-factory", distance: Math.round(4.46 * ROUTE_SCALE), text: "Wi-Ma / Ksiezy Mlyn: fabryczne tlo, stare torowisko i duzo cierpliwosci.", color: "#d9d3c4" },
+  { id: "kilinskiego-city", distance: Math.round(6.85 * ROUTE_SCALE), text: "Kilinskiego i centrum: patrz na pieszych, nie tylko na rozklad.", color: "#f4d35e" },
   { id: "piotrkowska-transfer", distance: Math.round(7.85 * ROUTE_SCALE), text: "Centrum przesiadkowe: lepiej czysty stop niz gonienie sekund.", color: "#f4d35e" },
+  { id: "unicorn-stable", distance: Math.round(8.05 * ROUTE_SCALE), text: "Stajnia Jednorozcow: duzo przesiadek, pokaz ladne zatrzymanie.", color: "#ffb22e" },
   { id: "kaliska-switch", distance: Math.round(9.02 * ROUTE_SCALE), text: "Za chwile Kaliska: przygotuj skret we Wlokniarzy.", color: "#8fb7e8" },
+  { id: "atlas-arena", distance: Math.round(9.42 * ROUTE_SCALE), text: "Kaliska / Atlas Arena: ruch miesza sie z dworcem, trzymaj bufor.", color: "#8fb7e8" },
+  { id: "wlokniarzy-run", distance: Math.round(10.85 * ROUTE_SCALE), text: "Wlokniarzy: dlugi odcinek kusi predkoscia, ale przystanki sa blisko.", color: "#d9d3c4" },
+  { id: "lutomierska-choice", distance: Math.round(12.35 * ROUTE_SCALE), text: "Lutomierska: jeden zly skret i Teofilow robi sie wspomnieniem.", color: "#ffb22e" },
+  { id: "teofilow-suburb", distance: Math.round(14.55 * ROUTE_SCALE), text: "Teofilow: robi sie spokojniej, ale ludzie chca dojechac do domu.", color: "#50d2c2" },
   { id: "teofilow-final", distance: Math.round(15.8 * ROUTE_SCALE), text: "Ostatni odcinek: dowiez sklad do Teofilowa bez szarpania.", color: "#50d2c2" }
 ];
 
@@ -123,4 +134,3 @@ export const BACKGROUNDS = [
   "wlokniarzy",
   "teofilow"
 ];
-
