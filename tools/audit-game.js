@@ -1,6 +1,19 @@
 const fs = require("fs");
+const path = require("path");
 
-const source = fs.readFileSync("src/main.js", "utf8");
+function listSourceFiles(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) return listSourceFiles(fullPath);
+      return entry.isFile() && entry.name.endsWith(".js") ? [fullPath] : [];
+    })
+}
+
+const source = listSourceFiles("src")
+  .sort()
+  .map((file) => fs.readFileSync(file, "utf8"))
+  .join("\n");
 const html = fs.readFileSync("index.html", "utf8");
 const css = fs.readFileSync("src/styles.css", "utf8");
 const failures = [];
