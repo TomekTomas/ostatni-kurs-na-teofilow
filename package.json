@@ -1,0 +1,24 @@
+{
+  "name": "new-project-3",
+  "version": "1.0.0",
+  "description": "Arcade survival w Phaser 3: dowiez pasazerow tramwajem przez przystanki, krzywe tory i lodzkie przeszkody.",
+  "main": "sw.js",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TomekTomas/ostatni-kurs-na-teofilow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/TomekTomas/ostatni-kurs-na-teofilow/issues"
+  },
+  "homepage": "https://github.com/TomekTomas/ostatni-kurs-na-teofilow#readme",
+  "devDependencies": {
+    "vitest": "^4.1.5"
+  }
+}

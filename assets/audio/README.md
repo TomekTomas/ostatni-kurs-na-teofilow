@@ -20,5 +20,14 @@ Use separate short one-shot sounds later if available:
 - `doors_close.ogg`
 - `brake_squeal.ogg`
 
+Optional Widzew Stadion music:
+
+- `taniec-eleny.ogg`
+- optional fallback: `taniec-eleny.mp3`
+
+Place a legally licensed local copy in this folder. The game fades it in shortly
+before `Widzew Stadion`, keeps it under the normal ride loop volume, and fades it
+out shortly after the stop.
+
 The game currently uses generated WebAudio cues. Real ride loops can be wired into
 Phaser preload after the files are placed here.

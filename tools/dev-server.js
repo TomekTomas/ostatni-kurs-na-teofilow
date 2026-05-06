@@ -11,7 +11,10 @@ const types = {
   ".js": "application/javascript; charset=utf-8",
   ".png": "image/png",
   ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg"
+  ".jpeg": "image/jpeg",
+  ".ogg": "audio/ogg",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav"
 };
 
 function resolveRequest(url) {

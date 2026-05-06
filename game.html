@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#10131a">
+    <title>Ostatni Kurs na Teofilow</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="src/styles.css">
+    <style>
+      .back-to-landing {
+        position: fixed;
+        z-index: 3000;
+        top: max(12px, env(safe-area-inset-top));
+        left: max(12px, env(safe-area-inset-left));
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 0 14px;
+        border: 2px solid rgba(255, 178, 46, 0.78);
+        border-radius: 6px;
+        background: rgba(16, 19, 26, 0.86);
+        color: #ffffff;
+        font: 700 13px "Lexend Deca", "Segoe UI", Arial, sans-serif;
+        text-decoration: none;
+        letter-spacing: 0;
+      }
+      .back-to-landing:focus-visible,
+      .back-to-landing:hover {
+        background: #ffb22e;
+        color: #10131a;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back-to-landing" href="landing.html" aria-label="Powrot do strony startowej">Powrot</a>
+    <main id="app">
+      <div id="game"></div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+    <script type="module" src="src/main.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>
