@@ -20,20 +20,40 @@ export class BootScene extends Phaser.Scene {
       "car-side-green",
       "car-side-cyan",
       "car-side-orange",
+      "car-side-red",
+      "compact-side-silver",
+      "taxi-side-yellow",
+      "police-side-blue",
       "van-side-white",
+      "delivery-van-blue",
       "bus-side",
       "bus-articulated-side",
+      "scooter-side",
+      "cargo-bike-side",
       "maintenance-van-side",
       "roadworks-truck-side",
       "cyclist-side",
       "pedestrian-side-a",
       "pedestrian-side-b",
       "pedestrian-side-c",
+      "pedestrian-side-d",
+      "pedestrian-side-e",
       "prop-tree",
       "prop-lamp",
       "prop-pole",
       "prop-bin",
       "prop-bollard",
+      "prop-ticket-machine",
+      "prop-news-kiosk",
+      "prop-ad-column",
+      "prop-road-cone",
+      "prop-road-cones",
+      "road-pothole",
+      "prop-road-barrier",
+      "prop-roadwork-sign",
+      "prop-construction-barrel",
+      "prop-sandbags",
+      "prop-manhole-cover",
       ...PASSENGER_KEYS
     ].forEach((key) => {
       this.load.image(key, `${spritePath}/${key}.png`);
@@ -77,4 +97,3 @@ export class BootScene extends Phaser.Scene {
     this.scene.start("MenuScene");
   }
 }
-

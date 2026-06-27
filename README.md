@@ -6,7 +6,9 @@ Trasa gry jest wzorowana na linii tramwajowej 8 w kierunku `Cm. Zarzew -> Teofil
 
 ## Uruchomienie
 
-Otworz `index.html` w przegladarce. Gra laduje Phaser 3 z CDN, wiec potrzebuje dostepu do internetu przy pierwszym uruchomieniu.
+Otworz `landing.html` w przegladarce, zeby zobaczyc strone promocyjna, albo `game.html`, zeby wejsc prosto do gry. `index.html` zostaje lekkim fallbackiem/redirectem do landing page.
+
+Gra laduje Phaser 3 z CDN, wiec potrzebuje dostepu do internetu przy pierwszym uruchomieniu. Service worker cache'uje lokalne pliki gry i assety, ale runtime Phasera nadal pochodzi z CDN.
 
 Wygodniej podczas pracy uruchomic lokalny serwer:
 
@@ -14,7 +16,7 @@ Wygodniej podczas pracy uruchomic lokalny serwer:
 node tools\dev-server.js
 ```
 
-Gra bedzie pod `http://127.0.0.1:4173`.
+Projekt bedzie pod `http://127.0.0.1:4173`, a glowny flow to `landing.html -> game.html`.
 
 Szybki audyt techniczny projektu:
 
@@ -22,7 +24,13 @@ Szybki audyt techniczny projektu:
 node tools\audit-game.js
 ```
 
-Sprawdza brakujace assety, komplet backgroundow, kolejnosc i odstepy przystankow oraz podstawowe referencje do polish assetow.
+Pelna lokalna weryfikacja:
+
+```powershell
+npm run verify
+```
+
+Sprawdza brakujace assety, komplet backgroundow, kolejnosc i odstepy przystankow, podstawowe referencje do polish assetow oraz testy czystej logiki gry.
 
 ## Sprite'y
 
@@ -103,6 +111,24 @@ Nowszy arkusz pojazdow i pieszych jest w `assets/generated/traffic-sprite-sheet-
 powershell -ExecutionPolicy Bypass -File tools\crop-generated-traffic-v2.ps1
 ```
 
+Finalny arkusz pojazdow, roweru cargo, pieszych i rekwizytow jest w `assets/generated/traffic-sprite-sheet-v3.png`. Wycinki z chroma-key i recznym kadrowaniem robi:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\crop-generated-traffic-v3.ps1
+```
+
+Arkusz roadwork z pacholkiem, dziura w asfalcie, barierka, znakiem, beczka, workami i wlazem jest w `assets/generated/roadwork-sprite-sheet-v1.png`. Wycinki:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\crop-generated-roadworks-v1.ps1
+```
+
+Proste awaryjne warianty ruchu ulicznego i male rekwizyty uliczne odtwarza:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\generate-extra-traffic-sprites.ps1
+```
+
 Arkusz nowoczesnych wiat przystankowych jest w `assets/generated/station-shelter-sheet-v2.png`. Wycinki:
 
 ```powershell
@@ -128,8 +154,10 @@ Predkosci pojazdow sa wewnetrznie zbalansowane na skali silnika, ale HUD przelic
 
 Przy obsludze przystanku drzwi tramwaju maja prosta animacje rozsuwania paneli na sprite'cie.
 
-Menu ma wybor Konstala/Pesy, tryb treningowy i zapis rekordu w `localStorage`. W grze sa komunikaty segmentow trasy, animowani pasazerowie na peronach, popupy punktowe i pixel-artowe panele zamiast tymczasowych prostokatow.
+Menu ma wybor Konstala/Pesy, cztery tryby gry, podglad celow kursu przed startem oraz rekordy zapisywane per tryb w `localStorage`. W grze sa komunikaty segmentow trasy, milestone bonusy, animowani pasazerowie na peronach, popupy punktowe i pixel-artowe panele zamiast tymczasowych prostokatow.
 
 Odleglosci trasy sa przeskalowane tak, aby miedzy przystankami byl realny odcinek jazdy, a nie kilka sekund slalomu. Na trasie sa tez zwrotnice: Pilsudskiego wymaga jazdy prosto, okolice Mickiewicza/Kaliskiej wymagaja skretu w Wlokniarzy, a dalej trzeba pilnowac kierunku na Teofilow.
 
-Konstal jest renderowany jako sklad dwuwagonowy. Przy otwarciu drzwi gra podmienia sprite tramwaju na wersje z otwartymi drzwiami, auta po dzwonku zjezdzaja z torow zamiast znikac, a ruch uliczny i piesi poruszaja sie w tle. W oknach tramwaju pojawiaja sie sylwetki pasazerow proporcjonalnie do oblozenia. Menu i teksty w grze uzywaja fontu Lexend Deca, a na trasie pojawiaja sie billboardy Lodz Cala Naprzod jako easter egg.
+Konstal jest renderowany jako sklad dwuwagonowy. Przy otwarciu drzwi gra podmienia sprite tramwaju na wersje z otwartymi drzwiami, auta po dzwonku zjezdzaja z torow zamiast znikac, a ruch uliczny i piesi poruszaja sie w tle. W oknach tramwaju pojawiaja sie sylwetki pasazerow proporcjonalnie do oblozenia.
+
+HUD ma kompaktowy gorny pasek, licznik dystansu, mini predkosciomierz i wskaznik combo. W trybie `Ostatni kurs` trasa przechodzi przez zachod slonca w strone nocnego przejazdu. Menu i teksty w grze uzywaja fontu Lexend Deca, a na trasie pojawiaja sie billboardy Lodz Cala Naprzod jako easter egg.

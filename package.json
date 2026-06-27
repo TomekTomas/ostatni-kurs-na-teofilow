@@ -2,9 +2,13 @@
   "name": "new-project-3",
   "version": "1.0.0",
   "description": "Arcade survival w Phaser 3: dowiez pasazerow tramwajem przez przystanki, krzywe tory i lodzkie przeszkody.",
-  "main": "sw.js",
+  "private": true,
+  "main": "src/main.js",
   "scripts": {
-    "test": "vitest run"
+    "audit": "node tools/audit-game.js",
+    "dev": "node tools/dev-server.js",
+    "test": "vitest run",
+    "verify": "npm run audit && npm test"
   },
   "repository": {
     "type": "git",
