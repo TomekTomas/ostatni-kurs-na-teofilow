@@ -16,6 +16,22 @@ test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page 
   await clickCanvas(page, 380, 142);
   await clickCanvas(page, 960, 410);
   await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("GameScene"), null, { timeout: 30_000 });
+  const hudLayout = await page.evaluate(() => {
+    const scene = window.__KURS8_GAME__.scene.getScene("GameScene");
+    const nextBounds = scene.nextText.getBounds();
+    const scheduleBounds = scene.hudScheduleText.getBounds();
+    return {
+      width: scene.scale.width,
+      odometerBottom: scene.getOdometerPanelY(),
+      nextRight: nextBounds.right,
+      scheduleRight: scheduleBounds.right,
+      scheduleBottom: scheduleBounds.bottom
+    };
+  });
+  expect(hudLayout.odometerBottom).toBeLessThanOrEqual(510);
+  expect(hudLayout.nextRight).toBeLessThanOrEqual(hudLayout.width - 14);
+  expect(hudLayout.scheduleRight).toBeLessThanOrEqual(hudLayout.width - 14);
+  expect(hudLayout.scheduleBottom).toBeLessThanOrEqual(62);
   await page.keyboard.press("p");
   await page.keyboard.press("u");
   await page.waitForFunction(() => window.__KURS8_GAME__.scene.getScene("GameScene").pauseSettingsLayer.visible === true);

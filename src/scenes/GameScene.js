@@ -357,7 +357,7 @@ export class GameScene extends Phaser.Scene {
     this.hudChrome.fillStyle(0x033968, 0.46);
     this.hudChrome.fillRoundedRect(14, 10, 210, 44, 8);
     this.hudChrome.fillRoundedRect(WIDTH / 2 - 148, 10, 296, 44, 8);
-    this.hudChrome.fillRoundedRect(WIDTH - 386, 10, 372, 44, 8);
+    this.hudChrome.fillRoundedRect(WIDTH - 386, 6, 372, 56, 8);
     this.hudChrome.fillStyle(0xffb22e, 0.9);
     this.hudChrome.fillRect(0, 66, WIDTH, 2);
     this.hudChrome.fillStyle(0x33b54b, 0.95);
@@ -366,7 +366,7 @@ export class GameScene extends Phaser.Scene {
     this.hudChrome.lineStyle(1, 0xf4efe4, 0.18);
     this.hudChrome.strokeRoundedRect(14, 10, 210, 44, 8);
     this.hudChrome.strokeRoundedRect(WIDTH / 2 - 148, 10, 296, 44, 8);
-    this.hudChrome.strokeRoundedRect(WIDTH - 386, 10, 372, 44, 8);
+    this.hudChrome.strokeRoundedRect(WIDTH - 386, 6, 372, 56, 8);
 
     this.clockLabel = this.add.text(28, topY + 8, "CZAS", { fontSize: "8px", color: "#8ea0a8", fontStyle: "700" }).setDepth(hudDepth + 1);
     this.clockText = this.add.text(28, topY + 21, "", { fontSize: "22px", color: "#ffb22e", fontStyle: "700" }).setDepth(hudDepth + 1);
@@ -1770,7 +1770,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   createOdometerHud() {
-    const panelY = this.touchLayer?.visible ? HEIGHT - 128 : HEIGHT - 82;
+    const panelY = this.getOdometerPanelY();
     this.odometerChrome = this.add.graphics().setDepth(100);
     this.odometerPanel = this.add.rectangle(16, panelY, 330, 78, 0x0d1318, 0.92)
       .setOrigin(0, 1)
@@ -1818,7 +1818,7 @@ export class GameScene extends Phaser.Scene {
 
   updateOdometerHud() {
     if (!this.odometerPanel || !this.speedometerGraphics || !this.speedometerNeedle) return;
-    const panelY = this.touchLayer?.visible ? HEIGHT - 128 : HEIGHT - 82;
+    const panelY = this.getOdometerPanelY();
     const panelX = 16;
     this.odometerPanel.setPosition(panelX, panelY);
     this.odometerPanel.setAlpha(0);
@@ -1878,6 +1878,10 @@ export class GameScene extends Phaser.Scene {
     this.speedometerNeedle.fillStyle(color, 1);
     this.speedometerNeedle.fillTriangle(needleX - 5, barY - 14, needleX + 5, barY - 14, needleX, barY - 7);
     this.speedometerNeedle.fillTriangle(needleX - 5, barY + 14, needleX + 5, barY + 14, needleX, barY + 7);
+  }
+
+  getOdometerPanelY() {
+    return this.touchLayer?.visible ? HEIGHT - 250 : HEIGHT - 210;
   }
 
   createNightLayer() {
