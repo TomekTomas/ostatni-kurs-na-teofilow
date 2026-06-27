@@ -13,3 +13,6 @@ Thumbs.db
 
 assets-audit-*.png
 .dev-server.pid
+_site/
+test-results/
+playwright-report/

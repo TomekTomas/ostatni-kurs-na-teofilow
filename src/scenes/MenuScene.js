@@ -2,6 +2,11 @@ import { HEIGHT, WIDTH } from "../config/constants.js";
 import { VEHICLES } from "../config/vehicles.js";
 import { GAME_MODES } from "../config/modes.js";
 import { missionResults } from "../logic/missions.js";
+import { achievementProgress } from "../logic/achievements.js";
+import { createDailyChallenge } from "../logic/dailyChallenge.js";
+import { loadProfile, saveProfile, sanitizeNickname } from "../services/profile.js";
+import { loadSettings, saveSettings } from "../services/settings.js";
+import { fetchDailyChallenge, fetchLeaderboard, flushScoreQueue, syncPlayerProfile } from "../services/leaderboard.js";
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -11,6 +16,10 @@ export class MenuScene extends Phaser.Scene {
   create() {
     this.selected = "konstal";
     this.selectedMode = "last";
+    this.currentTab = "GRAJ";
+    this.profile = loadProfile();
+    this.settings = loadSettings();
+    this.dailyChallenge = createDailyChallenge();
     this.highScore = this.readHighScore();
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x10131a).setOrigin(0);
     this.add.image(WIDTH / 2, 302, "bg-piotrkowska").setAlpha(0.86);
@@ -82,7 +91,16 @@ export class MenuScene extends Phaser.Scene {
       .setStrokeStyle(2, 0xffb22e, 0.42);
     this.startButton = this.makeImageButton(914, 612, "button-primary", "START", () => this.startSelectedGame());
 
-    this.input.keyboard.once("keydown-SPACE", () => this.startSelectedGame());
+    this.createMainTabs();
+    this.input.keyboard.once("keydown-SPACE", () => {
+      if (this.currentTab === "GRAJ") this.startSelectedGame();
+    });
+    fetchDailyChallenge().then((challenge) => {
+      if (!this.scene.isActive()) return;
+      this.dailyChallenge = challenge;
+      if (this.currentTab === "WYZWANIE") this.showTab("WYZWANIE");
+    });
+    flushScoreQueue().catch(() => {});
   }
 
   drawMenuChrome() {
@@ -117,8 +135,208 @@ export class MenuScene extends Phaser.Scene {
 
   startSelectedGame() {
     this.showMissionPreview(() => {
-      this.scene.start("GameScene", { vehicleKey: this.selected, modeKey: this.selectedMode });
+      this.scene.start("PreloadGameScene", { vehicleKey: this.selected, modeKey: this.selectedMode });
     });
+  }
+
+  startDailyChallenge() {
+    const challenge = this.dailyChallenge;
+    this.scene.start("PreloadGameScene", {
+      vehicleKey: challenge.vehicle,
+      modeKey: challenge.mode,
+      challenge
+    });
+  }
+
+  createMainTabs() {
+    const labels = ["GRAJ", "WYZWANIE", "RANKING", "OSIĄGNIĘCIA", "USTAWIENIA"];
+    this.tabBar = this.add.container(0, 0).setDepth(3000);
+    labels.forEach((label, index) => {
+      const widths = [112, 176, 152, 200, 176];
+      const x = 188 + widths.slice(0, index).reduce((sum, value) => sum + value, 0);
+      const width = widths[index] - 8;
+      const bg = this.add.rectangle(x, 124, width, 36, label === "GRAJ" ? 0xffb22e : 0x071017, 0.98)
+        .setOrigin(0)
+        .setStrokeStyle(1, label === "GRAJ" ? 0xf4efe4 : 0x4b5961, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const text = this.add.text(x + width / 2, 142, label, {
+        fontSize: "12px", fontStyle: "700", color: label === "GRAJ" ? "#10131a" : "#f4efe4"
+      }).setOrigin(0.5);
+      bg.on("pointerdown", () => this.showTab(label));
+      this.tabBar.add([bg, text]);
+      if (!this.tabButtons) this.tabButtons = [];
+      this.tabButtons.push({ label, bg, text });
+    });
+  }
+
+  showTab(label) {
+    this.currentTab = label;
+    this.tabButtons.forEach((button) => {
+      const active = button.label === label;
+      button.bg.setFillStyle(active ? 0xffb22e : 0x071017, 0.98);
+      button.bg.setStrokeStyle(1, active ? 0xf4efe4 : 0x4b5961, 0.9);
+      button.text.setColor(active ? "#10131a" : "#f4efe4");
+    });
+    this.tabOverlay?.destroy();
+    this.tabOverlay = null;
+    if (label === "GRAJ") return;
+    this.tabOverlay = this.add.container(0, 0).setDepth(2500);
+    this.tabOverlay.add(this.add.rectangle(38, 160, WIDTH - 76, HEIGHT - 184, 0x0d1318, 0.985)
+      .setOrigin(0)
+      .setStrokeStyle(2, 0x4b5961, 1));
+    this.tabOverlay.add(this.add.rectangle(38, 160, 6, HEIGHT - 184, 0x33b54b, 1).setOrigin(0));
+    if (label === "WYZWANIE") this.renderChallengeTab();
+    if (label === "RANKING") this.renderRankingTab("daily");
+    if (label === "OSIĄGNIĘCIA") this.renderAchievementsTab();
+    if (label === "USTAWIENIA") this.renderSettingsTab();
+  }
+
+  addOverlayTitle(title, subtitle) {
+    this.tabOverlay.add(this.add.text(78, 190, title, { fontSize: "28px", fontStyle: "700", color: "#ffb22e" }));
+    this.tabOverlay.add(this.add.text(78, 230, subtitle, { fontSize: "13px", color: "#d9d3c4" }));
+  }
+
+  renderChallengeTab() {
+    const challenge = this.dailyChallenge;
+    this.addOverlayTitle("WYZWANIE DNIA", `Wspólne zasady dla wszystkich graczy • ${challenge.date} UTC`);
+    const mode = GAME_MODES[challenge.mode];
+    const vehicle = VEHICLES[challenge.vehicle];
+    this.tabOverlay.add(this.add.rectangle(78, 282, 720, 250, 0x101820, 1).setOrigin(0).setStrokeStyle(2, 0x033968, 1));
+    this.tabOverlay.add(this.add.text(112, 312, mode.label.toUpperCase(), { fontSize: "23px", fontStyle: "700", color: "#50d2c2" }));
+    this.tabOverlay.add(this.add.text(112, 354, vehicle.name, { fontSize: "28px", fontStyle: "700", color: "#f4efe4" }));
+    this.tabOverlay.add(this.add.text(112, 402, mode.description, {
+      fontSize: "14px", color: "#d9d3c4", wordWrap: { width: 640, useAdvancedWrap: true }, lineSpacing: 5
+    }));
+    this.tabOverlay.add(this.add.text(112, 480, `Seed: ${challenge.seed}\nWersja zasad: ${challenge.rulesVersion} • próby bez limitu`, {
+      fontSize: "11px", color: "#8ea0a8", lineSpacing: 4
+    }));
+    const play = this.add.rectangle(960, 410, 300, 104, 0xffb22e, 1).setInteractive({ useHandCursor: true });
+    const playText = this.add.text(960, 410, "GRAJ WYZWANIE", { fontSize: "22px", fontStyle: "700", color: "#10131a" }).setOrigin(0.5);
+    play.on("pointerdown", () => this.startDailyChallenge());
+    this.tabOverlay.add([play, playText]);
+    const best = this.profile.stats.bestByMode[challenge.mode] || 0;
+    this.tabOverlay.add(this.add.text(960, 486, `Twój rekord trybu: ${best}`, { fontSize: "13px", color: "#f4efe4" }).setOrigin(0.5));
+  }
+
+  renderRankingTab(board = "daily") {
+    this.addOverlayTitle("RANKING", "Top 20 oraz Twoja aktualna pozycja");
+    const boards = [
+      ["daily", "DZISIAJ"], ["last", "OSTATNI"], ["training", "TRENING"], ["rush", "SZCZYT"], ["night", "NOC"]
+    ];
+    boards.forEach(([key, label], index) => {
+      const active = key === board;
+      const button = this.add.rectangle(78 + index * 184, 270, 168, 38, active ? 0xf4d35e : 0x111820, 1)
+        .setOrigin(0)
+        .setStrokeStyle(1, active ? 0xf4efe4 : 0x4b5961, 1)
+        .setInteractive({ useHandCursor: true });
+      const text = this.add.text(162 + index * 184, 289, label, { fontSize: "11px", fontStyle: "700", color: active ? "#10131a" : "#f4efe4" }).setOrigin(0.5);
+      button.on("pointerdown", () => {
+        this.showTab("RANKING");
+        this.tabOverlay.destroy();
+        this.tabOverlay = this.add.container(0, 0).setDepth(2500);
+        this.tabOverlay.add(this.add.rectangle(38, 160, WIDTH - 76, HEIGHT - 184, 0x0d1318, 0.985).setOrigin(0).setStrokeStyle(2, 0x4b5961, 1));
+        this.renderRankingTab(key);
+      });
+      this.tabOverlay.add([button, text]);
+    });
+    const status = this.add.text(WIDTH / 2, 350, "Łączenie z rankingiem...", { fontSize: "16px", color: "#8ea0a8" }).setOrigin(0.5);
+    this.tabOverlay.add(status);
+    fetchLeaderboard({ type: board === "daily" ? "daily" : "mode", mode: board, date: this.dailyChallenge.date }).then((result) => {
+      if (!status.active || this.currentTab !== "RANKING") return;
+      status.setVisible(false);
+      if (result.offline || result.error) {
+        const message = result.error ? "Ranking jest chwilowo niedostępny." : "Ranking online nie jest skonfigurowany lub jesteś offline.";
+        this.tabOverlay.add(this.add.text(WIDTH / 2, 390, message, { fontSize: "16px", color: "#ffb22e" }).setOrigin(0.5));
+        return;
+      }
+      const rows = result.rows.slice(0, 20);
+      rows.forEach((row, index) => {
+        const column = Math.floor(index / 10);
+        const item = index % 10;
+        const x = 100 + column * 550;
+        const y = 332 + item * 31;
+        this.tabOverlay.add(this.add.text(x, y, `${String(index + 1).padStart(2, "0")}. ${row.nickname || "Motorniczy"}#${row.public_tag || "----"}`, { fontSize: "12px", color: "#f4efe4" }));
+        this.tabOverlay.add(this.add.text(x + 400, y, String(row.score || 0), { fontSize: "12px", fontStyle: "700", color: "#ffb22e" }).setOrigin(1, 0));
+      });
+      if (result.own) {
+        this.tabOverlay.add(this.add.text(WIDTH / 2, 666, `Twoja pozycja: ${result.own.rank} • ${result.own.score} pkt`, { fontSize: "14px", fontStyle: "700", color: "#50d2c2" }).setOrigin(0.5));
+      }
+    });
+  }
+
+  renderAchievementsTab() {
+    const progress = achievementProgress(this.profile);
+    this.addOverlayTitle("OSIĄGNIĘCIA", `Odblokowano ${progress.filter(({ unlocked }) => unlocked).length}/${progress.length}`);
+    progress.forEach((achievement, index) => {
+      const column = index % 3;
+      const row = Math.floor(index / 3);
+      const x = 78 + column * 380;
+      const y = 282 + row * 86;
+      this.tabOverlay.add(this.add.rectangle(x, y, 346, 64, achievement.unlocked ? 0x103d2b : 0x101820, 1).setOrigin(0).setStrokeStyle(2, achievement.unlocked ? 0x33b54b : 0x34434b, 1));
+      this.tabOverlay.add(this.add.text(x + 22, y + 18, achievement.unlocked ? "✓" : "•", { fontSize: "24px", fontStyle: "700", color: achievement.unlocked ? "#50d2c2" : "#56636c" }));
+      this.tabOverlay.add(this.add.text(x + 60, y + 23, achievement.label, { fontSize: "13px", fontStyle: "700", color: achievement.unlocked ? "#f4efe4" : "#8ea0a8" }));
+    });
+    this.tabOverlay.add(this.add.text(78, 648, `Kursy: ${this.profile.stats.runs} • Ukończone: ${this.profile.stats.completed} • Pasażerowie: ${this.profile.stats.passengers} • Seria wyzwań: ${this.profile.stats.challengeStreak}`, { fontSize: "13px", color: "#d9d3c4" }));
+  }
+
+  renderSettingsTab() {
+    this.addOverlayTitle("USTAWIENIA", "Profil, dźwięk, ruch i czytelność");
+    this.tabOverlay.add(this.add.text(78, 282, `PROFIL: ${this.profile.nickname}#${this.profile.publicTag}`, { fontSize: "17px", fontStyle: "700", color: "#f4efe4" }));
+    const nickButton = this.add.rectangle(450, 293, 190, 38, 0x033968, 1).setInteractive({ useHandCursor: true });
+    const nickText = this.add.text(450, 293, "ZMIEŃ NICK", { fontSize: "12px", fontStyle: "700", color: "#f4efe4" }).setOrigin(0.5);
+    nickButton.on("pointerdown", () => this.editNickname());
+    this.tabOverlay.add([nickButton, nickText]);
+    const volumeRows = [
+      ["masterVolume", "Głośność główna"], ["musicVolume", "Muzyka"], ["effectsVolume", "Efekty"], ["weatherIntensity", "Pogoda"]
+    ];
+    volumeRows.forEach(([key, label], index) => this.addSettingStepper(key, label, 78, 350 + index * 56));
+    const toggles = [
+      ["screenShake", "Wstrząsy ekranu"], ["reducedMotion", "Ograniczone animacje"], ["highContrastSignals", "Kontrastowa sygnalizacja"]
+    ];
+    toggles.forEach(([key, label], index) => this.addSettingToggle(key, label, 720, 350 + index * 68));
+  }
+
+  addSettingStepper(key, label, x, y) {
+    this.tabOverlay.add(this.add.text(x, y, label, { fontSize: "14px", color: "#f4efe4" }));
+    const value = this.add.text(x + 390, y, `${Math.round(this.settings[key] * 100)}%`, { fontSize: "14px", fontStyle: "700", color: "#ffb22e" }).setOrigin(1, 0);
+    const minus = this.add.rectangle(x + 430, y + 9, 38, 34, 0x111820, 1).setInteractive({ useHandCursor: true });
+    const plus = this.add.rectangle(x + 526, y + 9, 38, 34, 0x111820, 1).setInteractive({ useHandCursor: true });
+    this.tabOverlay.add([minus, plus, value, this.add.text(x + 430, y + 8, "−", { fontSize: "20px", color: "#f4efe4" }).setOrigin(0.5), this.add.text(x + 526, y + 8, "+", { fontSize: "20px", color: "#f4efe4" }).setOrigin(0.5)]);
+    const change = (delta) => {
+      this.settings = saveSettings({ ...this.settings, [key]: Math.round(Math.min(1, Math.max(0, this.settings[key] + delta)) * 10) / 10 });
+      value.setText(`${Math.round(this.settings[key] * 100)}%`);
+    };
+    minus.on("pointerdown", () => change(-0.1));
+    plus.on("pointerdown", () => change(0.1));
+  }
+
+  addSettingToggle(key, label, x, y) {
+    const button = this.add.rectangle(x + 330, y + 10, 100, 38, this.settings[key] ? 0x33b54b : 0x26323a, 1).setInteractive({ useHandCursor: true });
+    const value = this.add.text(x + 330, y + 10, this.settings[key] ? "TAK" : "NIE", { fontSize: "12px", fontStyle: "700", color: this.settings[key] ? "#10131a" : "#f4efe4" }).setOrigin(0.5);
+    this.tabOverlay.add([this.add.text(x, y, label, { fontSize: "14px", color: "#f4efe4" }), button, value]);
+    button.on("pointerdown", () => {
+      this.settings = saveSettings({ ...this.settings, [key]: !this.settings[key] });
+      button.setFillStyle(this.settings[key] ? 0x33b54b : 0x26323a, 1);
+      value.setText(this.settings[key] ? "TAK" : "NIE").setColor(this.settings[key] ? "#10131a" : "#f4efe4");
+    });
+  }
+
+  editNickname() {
+    const value = window.prompt("Nick (3–16 znaków)", this.profile.nickname);
+    if (value === null) return;
+    const nickname = sanitizeNickname(value);
+    if (!nickname) {
+      window.alert("Nick musi mieć 3–16 znaków i może zawierać litery, cyfry, spację, _ oraz -.");
+      return;
+    }
+    this.profile.nickname = nickname;
+    saveProfile(this.profile);
+    syncPlayerProfile(nickname).finally(() => {
+      if (!this.scene.isActive()) return;
+      this.profile = loadProfile();
+      this.showTab("USTAWIENIA");
+    });
+    this.showTab("USTAWIENIA");
   }
 
   showMissionPreview(callback) {

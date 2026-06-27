@@ -1,0 +1,2 @@
+Lexend Deca is distributed under the SIL Open Font License 1.1.
+License text and project source: https://github.com/googlefonts/lexend

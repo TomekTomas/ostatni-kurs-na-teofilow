@@ -6,6 +6,12 @@ import { BG_LABELS, DISTRICT_PROFILES, DISTRICT_VISUALS, MAJOR_STOP_IDS, MAP_LAB
 import { PASSENGER_KEYS, PASSENGER_TINTS, WIDZEW_STADIUM_MUSIC, WORLD_PASSENGER_KEYS } from "../config/ui.js";
 import { courseGrade as courseGradeCalc } from "../logic/scoring.js";
 import { missionResults as missionResultsCalc } from "../logic/missions.js";
+import { RULES_VERSION, isDailyChallenge } from "../logic/dailyChallenge.js";
+import { createSeededRng } from "../logic/random.js";
+import { createRunSummary } from "../logic/runSummary.js";
+import { loadProfile, recordRun, saveProfile } from "../services/profile.js";
+import { loadSettings, saveSettings } from "../services/settings.js";
+import { submitRun } from "../services/leaderboard.js";
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -13,14 +19,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   init(data) {
+    data = data || {};
     this.vehicleKey = data.vehicleKey || "konstal";
     this.vehicle = VEHICLES[this.vehicleKey];
     this.modeKey = data.modeKey || (data.training ? "training" : "last");
     this.mode = GAME_MODES[this.modeKey] || GAME_MODES.last;
     this.training = this.modeKey === "training";
+    this.challenge = isDailyChallenge(data.challenge) ? data.challenge : null;
+    this.restartData = { vehicleKey: this.vehicleKey, modeKey: this.modeKey, challenge: this.challenge };
   }
 
   create() {
+    this.settings = loadSettings();
+    this.profile = loadProfile();
+    this.gameplayRng = createSeededRng(this.challenge?.seed || `free:${Date.now()}:${Math.random()}`);
     this.distance = 0;
     this.speed = 0;
     this.throttle = 0;
@@ -121,6 +133,9 @@ export class GameScene extends Phaser.Scene {
     this.createStadiumMusic();
     this.createOdometerHud();
     this.createComboHud();
+    this.createPauseSettingsOverlay();
+    this.visibilityHandler = () => this.handleVisibilityChange();
+    document.addEventListener("visibilitychange", this.visibilityHandler);
     this.sys.events.once("shutdown", () => {
       this.cleanupScene();
     });
@@ -482,6 +497,7 @@ export class GameScene extends Phaser.Scene {
       e: Phaser.Input.Keyboard.KeyCodes.E,
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       p: Phaser.Input.Keyboard.KeyCodes.P,
+      u: Phaser.Input.Keyboard.KeyCodes.U,
       r: Phaser.Input.Keyboard.KeyCodes.R,
       esc: Phaser.Input.Keyboard.KeyCodes.ESC
     });
@@ -593,7 +609,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   createPauseOverlay() {
-    this.pauseLayer = this.add.container(0, 0).setDepth(1000).setVisible(false);
+    this.pauseLayer = this.add.container(0, 0).setDepth(1550).setVisible(false);
     this.pauseLayer.add(this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x050607, 0.45).setOrigin(0));
     this.pauseLayer.add(this.add.image(WIDTH / 2, HEIGHT / 2, "pause-panel").setOrigin(0.5));
     this.pauseLayer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 74, "PAUZA", {
@@ -603,6 +619,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5));
     this.pauseLayer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 8, [
       "P: powrot do kursu",
+      "U: ustawienia",
       "R: restart",
       "Esc: menu"
     ], {
@@ -611,6 +628,74 @@ export class GameScene extends Phaser.Scene {
       align: "center",
       lineSpacing: 12
     }).setOrigin(0.5));
+    const settingsButton = this.add.rectangle(WIDTH / 2, HEIGHT / 2 + 126, 240, 42, 0x033968, 1)
+      .setInteractive({ useHandCursor: true });
+    settingsButton.on("pointerdown", () => this.togglePauseSettings());
+    this.pauseLayer.add([
+      settingsButton,
+      this.add.text(WIDTH / 2, HEIGHT / 2 + 126, "USTAWIENIA", { fontSize: "14px", fontStyle: "700", color: "#f4efe4" }).setOrigin(0.5)
+    ]);
+  }
+
+  createPauseSettingsOverlay() {
+    this.pauseSettingsLayer = this.add.container(0, 0).setDepth(1600).setVisible(false);
+    this.pauseSettingsLayer.add(this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x050607, 0.88).setOrigin(0));
+    this.pauseSettingsLayer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, 820, 560, 0x0d1318, 1).setStrokeStyle(3, 0xffb22e, 1));
+    this.pauseSettingsLayer.add(this.add.text(WIDTH / 2, 108, "USTAWIENIA", { fontSize: "27px", fontStyle: "700", color: "#ffb22e" }).setOrigin(0.5));
+    const rows = [
+      ["masterVolume", "Głośność główna"], ["musicVolume", "Muzyka"],
+      ["effectsVolume", "Efekty"], ["weatherIntensity", "Pogoda"]
+    ];
+    this.pauseSettingValues = {};
+    rows.forEach(([key, label], index) => {
+      const y = 170 + index * 58;
+      this.pauseSettingsLayer.add(this.add.text(290, y, label, { fontSize: "15px", color: "#f4efe4" }));
+      const value = this.add.text(705, y, `${Math.round(this.settings[key] * 100)}%`, { fontSize: "15px", fontStyle: "700", color: "#ffb22e" }).setOrigin(1, 0);
+      this.pauseSettingValues[key] = value;
+      const minus = this.add.rectangle(760, y + 10, 42, 36, 0x26323a, 1).setInteractive({ useHandCursor: true });
+      const plus = this.add.rectangle(856, y + 10, 42, 36, 0x26323a, 1).setInteractive({ useHandCursor: true });
+      minus.on("pointerdown", () => this.changePauseSetting(key, -0.1));
+      plus.on("pointerdown", () => this.changePauseSetting(key, 0.1));
+      this.pauseSettingsLayer.add([value, minus, plus,
+        this.add.text(760, y + 9, "−", { fontSize: "20px", color: "#f4efe4" }).setOrigin(0.5),
+        this.add.text(856, y + 9, "+", { fontSize: "20px", color: "#f4efe4" }).setOrigin(0.5)
+      ]);
+    });
+    const toggles = [
+      ["screenShake", "Wstrząsy ekranu"], ["reducedMotion", "Ograniczone animacje"], ["highContrastSignals", "Kontrastowa sygnalizacja"]
+    ];
+    this.pauseSettingToggles = {};
+    toggles.forEach(([key, label], index) => {
+      const x = 300 + index * 250;
+      const y = 446;
+      this.pauseSettingsLayer.add(this.add.text(x, y, label, { fontSize: "12px", color: "#d9d3c4" }).setOrigin(0.5));
+      const button = this.add.rectangle(x, y + 44, 104, 38, this.settings[key] ? 0x33b54b : 0x26323a, 1).setInteractive({ useHandCursor: true });
+      const value = this.add.text(x, y + 44, this.settings[key] ? "TAK" : "NIE", { fontSize: "12px", fontStyle: "700", color: this.settings[key] ? "#10131a" : "#f4efe4" }).setOrigin(0.5);
+      button.on("pointerdown", () => this.togglePauseSetting(key));
+      this.pauseSettingToggles[key] = { button, value };
+      this.pauseSettingsLayer.add([button, value]);
+    });
+    const close = this.add.rectangle(WIDTH / 2, 600, 260, 48, 0xffb22e, 1).setInteractive({ useHandCursor: true });
+    close.on("pointerdown", () => this.togglePauseSettings());
+    this.pauseSettingsLayer.add([close, this.add.text(WIDTH / 2, 600, "WRÓĆ DO PAUZY", { fontSize: "14px", fontStyle: "700", color: "#10131a" }).setOrigin(0.5)]);
+  }
+
+  togglePauseSettings() {
+    if (!this.paused || !this.pauseSettingsLayer) return;
+    this.pauseSettingsLayer.setVisible(!this.pauseSettingsLayer.visible);
+  }
+
+  changePauseSetting(key, delta) {
+    const next = Math.round(Math.min(1, Math.max(0, this.settings[key] + delta)) * 10) / 10;
+    this.settings = saveSettings({ ...this.settings, [key]: next });
+    this.pauseSettingValues[key]?.setText(`${Math.round(next * 100)}%`);
+  }
+
+  togglePauseSetting(key) {
+    this.settings = saveSettings({ ...this.settings, [key]: !this.settings[key] });
+    const control = this.pauseSettingToggles[key];
+    control?.button.setFillStyle(this.settings[key] ? 0x33b54b : 0x26323a, 1);
+    control?.value.setText(this.settings[key] ? "TAK" : "NIE").setColor(this.settings[key] ? "#10131a" : "#f4efe4");
   }
 
   update(_, deltaMs) {
@@ -618,7 +703,7 @@ export class GameScene extends Phaser.Scene {
       this.updateRideLoop(0, true);
       this.updateStadiumMusic(0, true);
       this.updateAmbientAudio(0, true);
-      if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.scene.restart({ vehicleKey: this.vehicleKey, modeKey: this.modeKey });
+      if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.scene.restart(this.restartData);
       if (Phaser.Input.Keyboard.JustDown(this.keys.esc)) this.scene.start("MenuScene");
       return;
     }
@@ -628,7 +713,8 @@ export class GameScene extends Phaser.Scene {
       this.updateRideLoop(0, true);
       this.updateStadiumMusic(0, true);
       this.updateAmbientAudio(0, true);
-      if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.scene.restart({ vehicleKey: this.vehicleKey, modeKey: this.modeKey });
+      if (Phaser.Input.Keyboard.JustDown(this.keys.u)) this.togglePauseSettings();
+      if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.scene.restart(this.restartData);
       if (Phaser.Input.Keyboard.JustDown(this.keys.esc)) this.scene.start("MenuScene");
       return;
     }
@@ -694,6 +780,29 @@ export class GameScene extends Phaser.Scene {
     if (this.finished) return;
     this.paused = !this.paused;
     this.pauseLayer.setVisible(this.paused);
+    if (!this.paused) this.pauseSettingsLayer?.setVisible(false);
+  }
+
+  handleVisibilityChange() {
+    if (!document.hidden || this.finished) return;
+    this.paused = true;
+    this.pauseLayer?.setVisible(true);
+    this.updateRideLoop(0, true);
+    this.updateStadiumMusic(0, true);
+    this.updateAmbientAudio(0, true);
+  }
+
+  gameRandomFloat(min, max) {
+    return this.gameplayRng.float(min, max);
+  }
+
+  gameRandomBetween(min, max) {
+    return this.gameplayRng.int(min, max);
+  }
+
+  shakeCamera(duration, intensity) {
+    if (!this.settings.screenShake || this.settings.reducedMotion) return;
+    this.cameras.main.shake(duration, intensity);
   }
 
   setSwitchChoice(choice) {
@@ -765,13 +874,13 @@ export class GameScene extends Phaser.Scene {
     this.timeLeft -= dt;
 
     if (this.distance > this.nextConditionAt) {
-      const next = Phaser.Math.FloatBetween(this.mode.trackMin, this.mode.trackMax);
+      const next = this.gameRandomFloat(this.mode.trackMin, this.mode.trackMax);
       const maxDrop = 0.14;
       this.trackTargetCondition = next < this.trackTargetCondition
         ? Math.max(next, this.trackTargetCondition - maxDrop)
         : Math.min(next, this.trackTargetCondition + 0.18);
       this.trackChangeNotice = 2.6;
-      this.nextConditionAt += Phaser.Math.Between(760, 1160);
+      this.nextConditionAt += this.gameRandomBetween(760, 1160);
     }
     const trackStep = dt * (this.trackTargetCondition < this.trackCondition ? 0.075 : 0.12);
     const trackDiff = this.trackTargetCondition - this.trackCondition;
@@ -786,7 +895,7 @@ export class GameScene extends Phaser.Scene {
     const safeSpeed = this.vehicle.maxSpeed * this.trackCondition * this.vehicle.handling * this.mode.speedAllowance;
     if (this.speed > safeSpeed) {
       this.dangerTime += dt;
-      this.cameras.main.shake(35, 0.0026 * this.vehicle.shake);
+      this.shakeCamera(35, 0.0026 * this.vehicle.shake);
       this.addFeedback("za szybko na aktualnym torowisku", "#ff5c8a");
       this.showMessage("ZA SZYBKO NA TYCH TORACH!", 220, "#ff5c8a");
       if (this.dangerTime > 2.15) this.gameOver("Wykolejenie na krzywym torowisku");
@@ -1035,7 +1144,7 @@ export class GameScene extends Phaser.Scene {
         this.speed *= hard ? 0.76 : 0.9;
         this.adjustSatisfaction(hard ? -11 : -3.5, hard ? "dziura przejechana za szybko" : "dziura w torowisku");
         this.addRidePenalty(hard ? 26 : 8, hard ? "mocne uderzenie na dziurze" : "nierowny przejazd");
-        this.cameras.main.shake(hard ? 320 : 140, hard ? 0.012 : 0.005);
+        this.shakeCamera(hard ? 320 : 140, hard ? 0.012 : 0.005);
         this.playCue(hard ? "bad" : "neutral");
         this.showMessage(hard ? "DZIURA! Pasazerowie polecieli z siedzen" : "Dziura przejechana ostroznie", 1200, hard ? "#ff5c8a" : "#f4d35e");
         if (hard) this.spawnEmotionBubble("!!", "#ff5c8a");
@@ -1135,7 +1244,7 @@ export class GameScene extends Phaser.Scene {
           this.addFeedback("za szybko na zwrotnicy", "#ffb22e");
           this.adjustSatisfaction(-0.3 * (this.speed / switchSafeSpeed), "szybka zwrotnica");
           if (relative < 80) {
-            this.cameras.main.shake(40, 0.002);
+            this.shakeCamera(40, 0.002);
           }
         }
       }
@@ -1158,7 +1267,7 @@ export class GameScene extends Phaser.Scene {
           this.speed *= 0.54;
           this.combo = 1;
           this.switchPenaltyUntil = this.time.now + 1800;
-          this.cameras.main.shake(260, 0.008);
+          this.shakeCamera(260, 0.008);
           this.playCue("bad");
           this.showMessage(`Zla zwrotnica: ${sw.wrongLabel}. Dyspozytor zawraca kurs`, 2100, "#ff5c8a");
         }
@@ -1177,9 +1286,10 @@ export class GameScene extends Phaser.Scene {
       else state = "amber";
       light.state = state;
 
-      light.red.setFillStyle(state === "red" ? 0xff5c5c : 0x522126);
-      light.amber.setFillStyle(state === "amber" ? 0xffc14d : 0x5f4e21);
-      light.green.setFillStyle(state === "green" ? 0x5ae08c : 0x1d4e33);
+      const contrast = this.settings.highContrastSignals;
+      light.red.setFillStyle(state === "red" ? (contrast ? 0xff2038 : 0xff5c5c) : 0x522126);
+      light.amber.setFillStyle(state === "amber" ? (contrast ? 0xfff000 : 0xffc14d) : 0x5f4e21);
+      light.green.setFillStyle(state === "green" ? (contrast ? 0x00ff72 : 0x5ae08c) : 0x1d4e33);
 
       const relative = light.distance - this.distance;
       if (!light.penalized && state === "red" && relative < 14 && relative > -22 && this.speed > 8) {
@@ -1507,7 +1617,7 @@ export class GameScene extends Phaser.Scene {
       const centerDistance = Math.abs(tram.container.x - WIDTH / 2);
       if (centerDistance < 200 && !tram.closeShakeArmed) {
         tram.closeShakeArmed = true;
-        this.cameras.main.shake(120, 0.001);
+        this.shakeCamera(120, 0.001);
       }
       if (centerDistance > 260) tram.closeShakeArmed = false;
 
@@ -1574,19 +1684,23 @@ export class GameScene extends Phaser.Scene {
 
   getWeatherRainIntensity() {
     if (this.mode.night) return 0;
-    if (this.currentBg === "centrum" || this.currentBg === "widzew") return 1.0;
-    if (this.currentBg === "piotrkowska") return 0.9;
-    if (this.currentBg === "teofilow") return 0.3;
-    return 0.58;
+    const motionScale = this.settings.reducedMotion ? 0.25 : 1;
+    const settingScale = this.settings.weatherIntensity * motionScale;
+    if (this.currentBg === "centrum" || this.currentBg === "widzew") return 1.0 * settingScale;
+    if (this.currentBg === "piotrkowska") return 0.9 * settingScale;
+    if (this.currentBg === "teofilow") return 0.3 * settingScale;
+    return 0.58 * settingScale;
   }
 
   getWeatherLeafVisibility() {
     const districtFactor = this.currentBg === "zarzew" || this.currentBg === "teofilow" ? 1 : 0.6;
-    return this.mode.night ? 0.18 : districtFactor;
+    const motionScale = this.settings.reducedMotion ? 0.25 : 1;
+    return (this.mode.night ? 0.18 : districtFactor) * this.settings.weatherIntensity * motionScale;
   }
 
   spawnPantographSparkBurst() {
     if (!this.weatherEffects) return;
+    if (this.settings.reducedMotion || this.settings.weatherIntensity <= 0) return;
     const sparkCount = Phaser.Math.Between(4, 6);
     const intensity = this.mode.night ? 0.9 : 0.4;
     for (let i = 0; i < sparkCount; i += 1) {
@@ -2894,7 +3008,7 @@ export class GameScene extends Phaser.Scene {
     const speedRatio = Phaser.Math.Clamp(this.speed / this.vehicle.maxSpeed, 0, 1);
     const baseVolume = Phaser.Math.Clamp(0.035 + speedRatio * 0.18, 0, this.vehicleKey === "konstal" ? 0.24 : 0.2);
     const ducking = this.isStadiumMusicAudible() ? 0.42 : 1;
-    const targetVolume = mute ? 0 : baseVolume * ducking;
+    const targetVolume = mute ? 0 : baseVolume * ducking * this.settings.masterVolume * this.settings.musicVolume;
     const currentVolume = this.rideLoop.volume || 0;
     const blend = dt > 0 ? Phaser.Math.Clamp(dt * 3.5, 0, 1) : 1;
     this.rideLoop.setVolume(Phaser.Math.Linear(currentVolume, targetVolume, blend));
@@ -2934,7 +3048,9 @@ export class GameScene extends Phaser.Scene {
 
     const inMusicZone = this.distance >= stop.distance - WIDZEW_STADIUM_MUSIC.before
       && this.distance <= stop.distance + WIDZEW_STADIUM_MUSIC.after;
-    const targetVolume = !mute && inMusicZone ? WIDZEW_STADIUM_MUSIC.volume : 0;
+    const targetVolume = !mute && inMusicZone
+      ? WIDZEW_STADIUM_MUSIC.volume * this.settings.masterVolume * this.settings.musicVolume
+      : 0;
     if (targetVolume > 0 && this.stadiumMusic.paused) {
       this.stadiumMusic.play().catch(() => {
         this.stadiumMusicFailed = true;
@@ -2968,6 +3084,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   playCue(type) {
+    if (this.settings.masterVolume <= 0 || this.settings.effectsVolume <= 0) return;
     const ctx = this.ensureAudio();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
@@ -2993,7 +3110,8 @@ export class GameScene extends Phaser.Scene {
     osc.type = oscillatorType;
     osc.frequency.setValueAtTime(frequency, start);
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(volume, start + 0.01);
+    const effectiveVolume = Math.max(0.0001, volume * this.settings.masterVolume * this.settings.effectsVolume);
+    gain.gain.exponentialRampToValueAtTime(effectiveVolume, start + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -3057,7 +3175,7 @@ export class GameScene extends Phaser.Scene {
     filter.Q.value = 4;
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(Math.min(0.025, 0.006 + speedRatio * 0.019), start + 0.03);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, Math.min(0.025, 0.006 + speedRatio * 0.019) * this.settings.masterVolume * this.settings.effectsVolume), start + 0.03);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.09);
     source.connect(filter);
     filter.connect(gain);
@@ -3082,7 +3200,7 @@ export class GameScene extends Phaser.Scene {
     filter.Q.value = 2.6;
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.06, start + 0.03);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, 0.06 * this.settings.masterVolume * this.settings.effectsVolume), start + 0.03);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
     source.connect(filter);
     filter.connect(gain);
@@ -3096,7 +3214,8 @@ export class GameScene extends Phaser.Scene {
     const ctx = this.ambientAudio.ctx;
     const profile = this.districtProfile || DISTRICT_PROFILES.zarzew;
     const traffic = Phaser.Math.Clamp(profile.traffic, 0.45, 1.8);
-    const targetGain = mute ? 0 : Phaser.Math.Clamp(0.015 + traffic * 0.012, 0, 0.035);
+    const targetGain = mute ? 0 : Phaser.Math.Clamp(0.015 + traffic * 0.012, 0, 0.035)
+      * this.settings.masterVolume * this.settings.effectsVolume;
     const targetFreq = 85 + traffic * 12;
     this.ambientAudio.humOsc.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.08);
     this.ambientAudio.humFilter.frequency.setTargetAtTime(200 + traffic * 60, ctx.currentTime, 0.12);
@@ -3138,6 +3257,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   cleanupScene() {
+    if (this.visibilityHandler) document.removeEventListener("visibilitychange", this.visibilityHandler);
     this.stopRideLoop();
     this.stopStadiumMusic();
     this.cleanupAmbientAudio();
@@ -3226,6 +3346,29 @@ export class GameScene extends Phaser.Scene {
       punctuality: Math.round(this.punctuality),
       time: this.formatTime(this.timeLeft)
     });
+    const completed = title !== "Kurs przerwany";
+    this.runSummary = createRunSummary({
+      mode: this.modeKey,
+      vehicle: this.vehicleKey,
+      score: finalScore,
+      grade,
+      completed,
+      servedStops: this.stats.servedStops,
+      missedStops: this.stats.missedStops,
+      passengers: this.delivered,
+      satisfaction: this.satisfaction,
+      smoothness: this.smoothness,
+      punctuality: this.punctuality,
+      redSignals: this.stats.redSignals,
+      switchCorrect: this.stats.switchCorrect,
+      switchWrong: this.stats.switchWrong,
+      durationSeconds: this.elapsedTime,
+      rulesVersion: this.challenge?.rulesVersion || RULES_VERSION,
+      challengeDate: this.challenge?.date || null,
+      challengeSeed: this.challenge?.seed || null
+    });
+    const recorded = recordRun(this.profile, this.runSummary);
+    this.profile = saveProfile(recorded.profile);
 
     const layer = this.add.container(0, 0).setDepth(2200);
     layer.add(this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x050607, 0.68).setOrigin(0));
@@ -3320,6 +3463,34 @@ export class GameScene extends Phaser.Scene {
       fontStyle: "700",
       color: "#f4d35e"
     }).setOrigin(1, 0));
+    if (recorded.newlyUnlocked.length) {
+      layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 + 181, `Nowe osiągnięcia: ${recorded.newlyUnlocked.map(({ label }) => label).join(", ")}`, {
+        fontSize: "10px", fontStyle: "700", color: "#50d2c2", wordWrap: { width: 560, useAdvancedWrap: true }
+      }));
+    }
+    const dailyBest = this.challenge ? this.profile.stats.dailyBest[this.challenge.date] || finalScore : null;
+    const initialStatus = completed
+      ? (this.challenge ? `Wysyłanie wyniku • rekord dnia ${dailyBest}` : "Wysyłanie wyniku do rankingu...")
+      : "Nieukończony kurs nie trafia do rankingu";
+    const submissionText = this.add.text(WIDTH / 2, HEIGHT / 2 + 238, initialStatus, {
+      fontSize: "11px", fontStyle: "700", color: completed ? "#8fb7e8" : "#8ea0a8"
+    }).setOrigin(0.5);
+    layer.add(submissionText);
+    if (completed) {
+      submitRun(this.runSummary).then((result) => {
+        if (!submissionText.active) return;
+        if (result.ok) {
+          const rank = result.daily?.rank || result.mode?.rank;
+          submissionText.setText(rank ? `Wynik zapisany • pozycja ${rank}` : "Wynik zapisany w rankingu").setColor("#50d2c2");
+        } else if (result.unconfigured) {
+          submissionText.setText("Ranking online nie jest jeszcze skonfigurowany").setColor("#8ea0a8");
+        } else if (result.offline) {
+          submissionText.setText("Offline: wynik czeka w kolejce").setColor("#ffb22e");
+        } else {
+          submissionText.setText("Nie udało się wysłać wyniku • zapisano do ponowienia").setColor("#ffb22e");
+        }
+      });
+    }
   }
 
   addResultBars(layer, x, y) {
