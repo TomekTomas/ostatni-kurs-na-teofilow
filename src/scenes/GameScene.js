@@ -221,8 +221,8 @@ export class GameScene extends Phaser.Scene {
       this.makeTrafficCar(-840, 606, "bus-side", 0.82, 42, "right", "front"),
       this.makeTrafficCar(-1280, 606, "delivery-van-blue", 0.72, 48, "right", "front"),
       this.makeTrafficCar(-1560, 606, "bus-articulated-side", 0.82, 34, "right", "front"),
-      this.makeTrafficCar(-2050, 606, "scooter-side", 0.72, 76, "right", "front"),
-      this.makeTrafficCar(-2460, 606, "cargo-bike-side", 0.58, 50, "right", "front")
+      this.makeTrafficCar(-2050, 606, "scooter-side", 0.34, 76, "right", "front"),
+      this.makeTrafficCar(-2460, 606, "cargo-bike-side", 0.4, 50, "right", "front")
     ];
     this.pedestrians = this.makePedestrians();
     this.catenary = this.makeCatenary();
