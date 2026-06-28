@@ -12,6 +12,28 @@ test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page 
   await expect(page).toHaveURL(/game\.html/);
   await expect(page.locator("canvas")).toBeVisible();
   await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
+  const menuLayout = await page.evaluate(() => {
+    const scene = window.__KURS8_GAME__.scene.getScene("MenuScene");
+    scene.modeRecordText.setText("Rekord Ostatni kurs: 2859");
+    const recordPanel = scene.recordPanel.getBounds();
+    const recordText = scene.modeRecordText.getBounds();
+    const modePanel = scene.modePanel.getBounds();
+    const modeDescription = scene.modeDescription.getBounds();
+    const recordLines = scene.children.list
+      .filter((object) => object.type === "Text" && object.x === 98 && object.y >= 172 && object.y <= 276)
+      .sort((first, second) => first.y - second.y)
+      .map((object) => object.getBounds());
+    return {
+      recordTextBottom: recordText.bottom,
+      recordPanelBottom: recordPanel.bottom,
+      modeDescriptionBottom: modeDescription.bottom,
+      modePanelBottom: modePanel.bottom,
+      minimumRecordGap: Math.min(...recordLines.slice(1).map((line, index) => line.y - recordLines[index].bottom))
+    };
+  });
+  expect(menuLayout.recordTextBottom).toBeLessThanOrEqual(menuLayout.recordPanelBottom - 4);
+  expect(menuLayout.modeDescriptionBottom).toBeLessThanOrEqual(menuLayout.modePanelBottom - 6);
+  expect(menuLayout.minimumRecordGap).toBeGreaterThanOrEqual(4);
 
   await clickCanvas(page, 380, 142);
   await clickCanvas(page, 960, 410);
