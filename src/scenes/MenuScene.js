@@ -46,14 +46,14 @@ export class MenuScene extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
 
-    this.add.image(70, 156, "panel-hud").setOrigin(0).setScale(1.04, 1.22);
-    this.add.text(98, 176, "REKORD", { fontSize: "15px", color: "#8ea0a8", fontStyle: "700" });
-    this.add.text(98, 202, `${this.highScore}`, { fontSize: "32px", color: "#ffb22e", fontStyle: "700" });
-    this.add.text(98, 240, "Linia 8: Zarzew -> Teofilow", { fontSize: "12px", color: "#f4efe4" });
-    this.add.text(98, 262, "Cel: dowiez komplet pasazerow", { fontSize: "12px", color: "#d9d3c4" });
+    this.recordPanel = this.add.image(70, 156, "panel-hud").setOrigin(0).setScale(1.04, 1.25);
+    this.add.text(98, 172, "REKORD", { fontSize: "15px", color: "#8ea0a8", fontStyle: "700" });
+    this.add.text(98, 194, `${this.highScore}`, { fontSize: "32px", color: "#ffb22e", fontStyle: "700" });
+    this.add.text(98, 236, "Linia 8: Zarzew -> Teofilow", { fontSize: "12px", color: "#f4efe4" });
+    this.add.text(98, 256, "Cel: dowiez komplet pasazerow", { fontSize: "12px", color: "#d9d3c4" });
     this.add.image(462, 224, "lcn-logo-menu").setOrigin(0.5).setScale(0.3).setAlpha(0.96);
 
-    this.modeRecordText = this.add.text(98, 280, "", { fontSize: "11px", color: "#8ea0a8" });
+    this.modeRecordText = this.add.text(98, 276, "", { fontSize: "11px", color: "#8ea0a8" });
 
     this.konstalButton = this.makeVehicleButton(596, 156, "konstal");
     this.pesaButton = this.makeVehicleButton(596, 286, "pesa");
@@ -75,7 +75,7 @@ export class MenuScene extends Phaser.Scene {
       "P: pauza | R: restart"
     ], { fontSize: "12px", color: "#d9d3c4", lineSpacing: 3 });
 
-    this.add.image(70, 488, "panel-dark").setOrigin(0).setScale(1.04, 1.5);
+    this.modePanel = this.add.image(70, 488, "panel-dark").setOrigin(0).setScale(1.04, 1.96);
     this.add.text(98, 510, "TRYB", { fontSize: "17px", color: "#f4d35e", fontStyle: "700" });
     this.modeButtons = [
       this.makeModeButton(98, 544, "last"),
@@ -83,7 +83,7 @@ export class MenuScene extends Phaser.Scene {
       this.makeModeButton(98, 594, "rush"),
       this.makeModeButton(256, 594, "night")
     ];
-    this.modeDescription = this.add.text(98, 648, "", { fontSize: "11px", color: "#d9d3c4", wordWrap: { width: 360, useAdvancedWrap: true } });
+    this.modeDescription = this.add.text(98, 642, "", { fontSize: "11px", color: "#d9d3c4", wordWrap: { width: 360, useAdvancedWrap: true } });
     this.refreshModes();
 
     this.startGlow = this.add.rectangle(904, 602, 280, 92, 0xffb22e, 0.14)
