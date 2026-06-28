@@ -32,6 +32,18 @@ test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page 
   expect(hudLayout.nextRight).toBeLessThanOrEqual(hudLayout.width - 14);
   expect(hudLayout.scheduleRight).toBeLessThanOrEqual(hudLayout.width - 14);
   expect(hudLayout.scheduleBottom).toBeLessThanOrEqual(62);
+  const vehicleScale = await page.evaluate(() => {
+    const scene = window.__KURS8_GAME__.scene.getScene("GameScene");
+    const scooter = scene.trafficCars.find((vehicle) => vehicle.texture.key === "scooter-side");
+    const cargoBike = scene.trafficCars.find((vehicle) => vehicle.texture.key === "cargo-bike-side");
+    return {
+      scooterHeight: scooter.displayHeight,
+      cargoBikeHeight: cargoBike.displayHeight,
+      tramHeight: scene.tram.displayHeight
+    };
+  });
+  expect(vehicleScale.scooterHeight).toBeLessThan(vehicleScale.tramHeight * 0.6);
+  expect(vehicleScale.cargoBikeHeight).toBeLessThan(vehicleScale.tramHeight * 0.6);
   await page.keyboard.press("p");
   await page.keyboard.press("u");
   await page.waitForFunction(() => window.__KURS8_GAME__.scene.getScene("GameScene").pauseSettingsLayer.visible === true);
