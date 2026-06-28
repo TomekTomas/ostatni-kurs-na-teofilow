@@ -120,7 +120,7 @@ expectSource(/tramNoseReach/, "Car obstacle collision should be measured against
 expectSource(/displayMaxSpeed:\s*65[\s\S]*displayMaxSpeed:\s*70/, "Vehicle display speed caps should stay near real Lodz tram speeds");
 expectSource(/trackTargetCondition/, "Track condition should transition toward a target instead of changing safe speed instantly");
 expectSource(/const maxDrop = 0\.14/, "Track condition drops should be capped so allowed speed does not collapse abruptly");
-expectSource(/Phaser\.Math\.Between\(760, 1160\)/, "Track condition changes should be spaced far enough apart to feel readable");
+expectSource(/(?:Phaser\.Math\.Between|this\.gameRandomBetween)\(760, 1160\)/, "Track condition changes should be spaced far enough apart to feel readable");
 expectSource(/roadBackLane[\s\S]*roadFrontLane/, "City traffic should have separated visual road lanes");
 expectSource(/car\.parallax/, "Ambient traffic should move with a small world-relative parallax");
 expectSource(/event\.detouring/, "Obstacle cars should have a dedicated detour state after the bell");
@@ -136,8 +136,8 @@ expectSource(/setDepth\(2200\)/, "End screen should render above route labels an
 expectSource(/missionResults\(/, "Game should evaluate course mission goals");
 expectSource(/playCue\(/, "Gameplay actions should trigger simple audio cues");
 expectSource(/AudioContext/, "Audio cues should use browser WebAudio without external sound files");
-expectSource(/this\.load\.audio\("ride-konstal"/, "Konstal ride loop should be preloaded");
-expectSource(/this\.load\.audio\("ride-pesa"/, "Pesa ride loop should be preloaded");
+expectSource(/(?:this|scene)\.load\.audio\("ride-konstal"/, "Konstal ride loop should be preloaded");
+expectSource(/(?:this|scene)\.load\.audio\("ride-pesa"/, "Pesa ride loop should be preloaded");
 expectSource(/updateRideLoop\(dt\)/, "Ride loop should be updated during gameplay");
 expectSource(/setRate\(/, "Ride loop playback rate should react to speed");
 expectSource(/makeCatenary\(/, "Route should include procedural tram catenary poles and wires");
@@ -148,7 +148,7 @@ expectSource(/const wireY = 414/, "Catenary contact wire should be lowered near 
 expectSource(/shelterKey === "station" \? 0\.48/, "Station shelters should stay scaled below tram height");
 expectSource(/setScale\(isUnicornStop \? 0\.92 : 0\.82, isUnicornStop \? 0\.86 : 0\.82\)/, "Stop name cards should be scaled down to match the shelter, with a larger Stajnia variant");
 expectSource(/isUnicornStop = stop\.id === "piotrkowska"/, "Piotrkowska Centrum should use a dedicated Stajnia Jednorozcow stop object");
-expectSource(/this\.load\.image\("station-unicorn", "assets\/generated\/stajnia-jednorozcow-stop\.png"\)/, "Stajnia Jednorozcow should be loaded from a dedicated generated bitmap asset");
+expectSource(/(?:this|scene)\.load\.image\("station-unicorn", "assets\/generated\/stajnia-jednorozcow-stop\.png"\)/, "Stajnia Jednorozcow should be loaded from a dedicated generated bitmap asset");
 expectSource(/shelterKey = isUnicornStop \? "station-unicorn"/, "Stajnia Jednorozcow should render as a special generated station asset");
 expectSource(/const GAME_MODES = \{/, "Game should expose configurable modes");
 expectSource(/makeModeButton\(/, "Menu should allow choosing a game mode");

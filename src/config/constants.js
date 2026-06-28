@@ -8,7 +8,7 @@ export const START_ASPECT = WIDTH / HEIGHT;
 export const TRACK_Y = 560;
 export const TRAM_BASE_Y = 628;
 export const ROUTE_SCALE = 5500;
-export const ROUTE_LENGTH = 94000;
+export const ROUTE_LENGTH = 91850;
 export const FONT_FAMILY = '"Lexend Deca", "Segoe UI", Arial, sans-serif';
 export const SCORE_WEIGHTS = {
   deliveredPassenger: 38,

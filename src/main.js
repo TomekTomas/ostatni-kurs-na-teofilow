@@ -1,6 +1,7 @@
 import { BASE_WIDTH, FONT_FAMILY, HEIGHT, START_ASPECT, WIDTH } from "./config/constants.js";
 import { BootScene } from "./scenes/BootScene.js";
 import { MenuScene } from "./scenes/MenuScene.js";
+import { PreloadGameScene } from "./scenes/PreloadGameScene.js";
 import { GameScene } from "./scenes/GameScene.js";
 
 const config = {
@@ -17,7 +18,7 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  scene: [BootScene, MenuScene, GameScene]
+  scene: [BootScene, MenuScene, PreloadGameScene, GameScene]
 };
 
 window.addEventListener("load", () => {
@@ -31,6 +32,9 @@ window.addEventListener("load", () => {
   };
   const startGame = () => {
     const game = new Phaser.Game(config);
+    if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+      window.__KURS8_GAME__ = game;
+    }
     attachRuntimeGuards(game);
     return game;
   };

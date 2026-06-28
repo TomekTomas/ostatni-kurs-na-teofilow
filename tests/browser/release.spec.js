@@ -1,0 +1,80 @@
+const { test, expect } = require("@playwright/test");
+
+test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page }) => {
+  const errors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+
+  await page.goto("/landing.html");
+  await page.locator(".play-button").click();
+  await expect(page).toHaveURL(/game\.html/);
+  await expect(page.locator("canvas")).toBeVisible();
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
+
+  await clickCanvas(page, 380, 142);
+  await clickCanvas(page, 960, 410);
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("GameScene"), null, { timeout: 30_000 });
+  const hudLayout = await page.evaluate(() => {
+    const scene = window.__KURS8_GAME__.scene.getScene("GameScene");
+    const nextBounds = scene.nextText.getBounds();
+    const scheduleBounds = scene.hudScheduleText.getBounds();
+    return {
+      width: scene.scale.width,
+      odometerBottom: scene.getOdometerPanelY(),
+      nextRight: nextBounds.right,
+      scheduleRight: scheduleBounds.right,
+      scheduleBottom: scheduleBounds.bottom
+    };
+  });
+  expect(hudLayout.odometerBottom).toBeLessThanOrEqual(510);
+  expect(hudLayout.nextRight).toBeLessThanOrEqual(hudLayout.width - 14);
+  expect(hudLayout.scheduleRight).toBeLessThanOrEqual(hudLayout.width - 14);
+  expect(hudLayout.scheduleBottom).toBeLessThanOrEqual(62);
+  await page.keyboard.press("p");
+  await page.keyboard.press("u");
+  await page.waitForFunction(() => window.__KURS8_GAME__.scene.getScene("GameScene").pauseSettingsLayer.visible === true);
+  await page.keyboard.press("u");
+  await page.keyboard.press("p");
+  await page.evaluate(() => {
+    const scene = window.__KURS8_GAME__.scene.getScene("GameScene");
+    scene.currentStopIndex = 34;
+    scene.checkEnd();
+  });
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.getScene("GameScene")?.finished === true);
+  const summary = await page.evaluate(() => window.__KURS8_GAME__.scene.getScene("GameScene").runSummary);
+  expect(summary).toMatchObject({ version: 1, completed: true });
+  expect(errors).toEqual([]);
+});
+
+test("gra uruchamia menu offline po pierwszym wczytaniu", async ({ page, context }) => {
+  await page.goto("/game.html");
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
+  await page.waitForFunction(async () => Boolean(await navigator.serviceWorker.ready));
+  await page.reload();
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await context.setOffline(true);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"), null, { timeout: 30_000 });
+  await expect(page.locator("canvas")).toBeVisible();
+  await context.setOffline(false);
+});
+
+test("interfejs miesci sie w mobilnym landscape", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  await page.goto("http://127.0.0.1:4173/game.html");
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
+  const box = await page.locator("canvas").boundingBox();
+  expect(box.width).toBeLessThanOrEqual(844);
+  expect(box.height).toBeLessThanOrEqual(390);
+  expect(box.width).toBeGreaterThan(600);
+  await context.close();
+});
+
+async function clickCanvas(page, gameX, gameY) {
+  const canvas = page.locator("canvas");
+  const box = await canvas.boundingBox();
+  await page.mouse.click(box.x + (gameX / 1280) * box.width, box.y + (gameY / 720) * box.height);
+}
