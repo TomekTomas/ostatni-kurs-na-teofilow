@@ -27,6 +27,8 @@
   },
   "homepage": "https://github.com/TomekTomas/ostatni-kurs-na-teofilow#readme",
   "devDependencies": {
+    "@emnapi/core": "^1.11.1",
+    "@emnapi/runtime": "^1.11.1",
     "@playwright/test": "^1.61.1",
     "chrome-launcher": "^1.2.1",
     "lighthouse": "^12.6.1",
