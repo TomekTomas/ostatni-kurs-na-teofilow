@@ -100,6 +100,12 @@ const clips = [
     duration: 4.2,
     setup: async (page) => {
       await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
+      await page.evaluate(() => {
+        const scene = window.__KURS8_GAME__.scene.getScene("MenuScene");
+        scene.children.list
+          .filter((object) => object.texture?.key === "lcn-logo-menu")
+          .forEach((object) => object.setVisible(false));
+      });
       await page.waitForTimeout(450);
       setTimeout(() => clickCanvas(page, 820, 342), 900);
       setTimeout(() => clickCanvas(page, 820, 210), 2450);
@@ -149,7 +155,11 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   await waitForServer();
-  for (const clip of clips) {
+  const selectedClips = process.env.PROMO_CLIP
+    ? clips.filter((clip) => clip.name === process.env.PROMO_CLIP)
+    : clips;
+  if (!selectedClips.length) throw new Error(`Nieznany klip: ${process.env.PROMO_CLIP}`);
+  for (const clip of selectedClips) {
     const contextStartedAt = Date.now();
     const context = await browser.newContext({
       viewport: { width: 1280, height: 720 },

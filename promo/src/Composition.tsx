@@ -53,31 +53,25 @@ const enter = (frame: number, delay = 0) =>
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
 
-const BrandMark: React.FC<{ compact?: boolean }> = ({ compact = false }) => (
+const CreatorMark: React.FC<{ compact?: boolean }> = ({ compact = false }) => (
   <div
     style={{
       display: "flex",
       alignItems: "center",
-      gap: 24,
+      gap: 20,
       height: compact ? 80 : 112,
     }}
   >
-    <Img
-      src={staticFile("branding/lcn-logo-white.png")}
-      style={{ width: compact ? 128 : 176, maxHeight: compact ? 70 : 96, objectFit: "contain" }}
-    />
-    <div style={{ width: 5, height: compact ? 52 : 72, background: COLORS.green }} />
+    <div style={{ width: 7, height: compact ? 54 : 76, background: COLORS.green }} />
     <div
       style={{
-        fontSize: compact ? 30 : 38,
+        fontSize: compact ? 34 : 46,
         fontWeight: 900,
         color: COLORS.white,
-        lineHeight: 1.05,
+        lineHeight: 1,
       }}
     >
-      ŁÓDŹ CAŁA
-      <br />
-      NAPRZÓD
+      TOMASZ TOMAS
     </div>
   </div>
 );
@@ -182,7 +176,7 @@ const PromoScene: React.FC<PromoSceneProps> = ({
         }}
       >
         <div style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <BrandMark compact />
+          <CreatorMark compact />
           <div style={{ color: COLORS.gold, fontSize: 32, fontWeight: 900 }}>LINIA 8</div>
         </div>
         <div
@@ -265,7 +259,7 @@ const Intro: React.FC = () => {
           textAlign: "center",
         }}
       >
-        <BrandMark />
+        <CreatorMark />
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 38 }}>
           <div style={{ width: 160, height: 10, background: COLORS.gold }} />
           <div
@@ -324,7 +318,7 @@ const Outro: React.FC = () => {
         textAlign: "center",
       }}
     >
-      <BrandMark />
+      <CreatorMark />
       <Img src={staticFile("branding/landing-tram.webp")} style={{ width: 940, objectFit: "contain" }} />
       <div
         style={{
@@ -462,7 +456,7 @@ export const OstatniKursCover: React.FC = () => (
         textAlign: "center",
       }}
     >
-      <BrandMark />
+      <CreatorMark />
       <div style={{ display: "flex", flexDirection: "column", gap: 30, alignItems: "center" }}>
         <div style={{ width: 160, height: 10, background: COLORS.gold }} />
         <div style={{ color: COLORS.gold, fontSize: 112, lineHeight: 0.92, fontWeight: 900 }}>OSTATNI KURS</div>

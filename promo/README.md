@@ -11,6 +11,12 @@ npm run prepare:media
 
 `prepare:media` generuje oryginalny podkład muzyczny i automatycznie nagrywa pięć ujęć z lokalnej wersji gry. Gotowy render osiąga około `-17 LUFS` i `-2 dBTP` w stereo AAC 48 kHz.
 
+Pojedynczy klip można odświeżyć przez ustawienie `PROMO_CLIP`, np. w PowerShell:
+
+```powershell
+$env:PROMO_CLIP="menu"; npm run capture; Remove-Item Env:PROMO_CLIP
+```
+
 ## Podgląd i render
 
 ```bash
