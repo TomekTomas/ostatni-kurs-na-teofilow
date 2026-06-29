@@ -1,0 +1,41 @@
+{
+  "name": "promo",
+  "version": "1.0.0",
+  "description": "Pionowa rolka promocyjna gry Ostatni Kurs na Teofilow",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.484",
+    "@remotion/fonts": "4.0.484",
+    "@remotion/media": "4.0.484",
+    "@remotion/transitions": "4.0.484",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.484"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.484",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "eslint": "9.19.0",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "audio": "node scripts/generate-audio.mjs",
+    "capture": "node scripts/capture-gameplay.mjs",
+    "prepare:media": "npm run audio && npm run capture",
+    "render:reel": "remotion render OstatniKursReel out/ostatni-kurs-reel.mp4 --codec=h264 --crf=18",
+    "normalize": "node scripts/normalize-video.mjs",
+    "render:cover": "remotion still OstatniKursCover out/ostatni-kurs-cover.png",
+    "render": "npm run render:reel && npm run normalize && npm run render:cover",
+    "build": "remotion bundle",
+    "upgrade": "remotion upgrade",
+    "lint": "eslint src && tsc --noEmit"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}
