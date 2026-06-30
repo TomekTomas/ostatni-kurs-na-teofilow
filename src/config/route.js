@@ -97,11 +97,18 @@ export const SWITCHES = [
 ];
 
 export const LCN_BILLBOARDS = [
+  { distance: Math.round(0.85 * ROUTE_SCALE), key: "lcn-billboard-2", y: 488, scale: 0.62 },
   { distance: Math.round(2.05 * ROUTE_SCALE), key: "lcn-billboard-1", y: 494, scale: 0.68 },
+  { distance: Math.round(3.25 * ROUTE_SCALE), key: "lcn-billboard-3", y: 490, scale: 0.63 },
   { distance: Math.round(4.35 * ROUTE_SCALE), key: "lcn-billboard-2", y: 488, scale: 0.64 },
+  { distance: Math.round(5.75 * ROUTE_SCALE), key: "lcn-billboard-3", y: 492, scale: 0.62 },
   { distance: Math.round(7.25 * ROUTE_SCALE), key: "lcn-billboard-3", y: 490, scale: 0.66 },
+  { distance: Math.round(8.7 * ROUTE_SCALE), key: "lcn-billboard-2", y: 488, scale: 0.63 },
   { distance: Math.round(10.2 * ROUTE_SCALE), key: "lcn-billboard-1", y: 494, scale: 0.64 },
-  { distance: Math.round(14.7 * ROUTE_SCALE), key: "lcn-billboard-2", y: 488, scale: 0.62 }
+  { distance: Math.round(11.55 * ROUTE_SCALE), key: "lcn-billboard-3", y: 490, scale: 0.64 },
+  { distance: Math.round(12.9 * ROUTE_SCALE), key: "lcn-billboard-2", y: 488, scale: 0.62 },
+  { distance: Math.round(14.1 * ROUTE_SCALE), key: "lcn-billboard-3", y: 492, scale: 0.63 },
+  { distance: Math.round(15.5 * ROUTE_SCALE), key: "lcn-billboard-2", y: 488, scale: 0.64 }
 ];
 
 export const ROUTE_MOMENTS = [

@@ -12,6 +12,7 @@ import {
   scheduleTimeForStop,
   shortLabel
 } from "../src/logic/route.js";
+import { LCN_BILLBOARDS } from "../src/config/route.js";
 
 describe("trasa linii 8", () => {
   it("ma dokladnie 34 przystanki", () => {
@@ -87,5 +88,18 @@ describe("trasa linii 8", () => {
   it("kazda zwrotnica ma prawidlowy kierunek correct", () => {
     expect(SWITCHES.length).toBeGreaterThan(0);
     SWITCHES.forEach((sw) => expect(["left", "straight"]).toContain(sw.correct));
+  });
+
+  it("regularnie pokazuje trzy warianty billboardow LCN", () => {
+    const variants = LCN_BILLBOARDS.reduce((counts, billboard) => {
+      counts[billboard.key] = (counts[billboard.key] || 0) + 1;
+      return counts;
+    }, {});
+    expect(LCN_BILLBOARDS).toHaveLength(12);
+    expect(variants).toEqual({
+      "lcn-billboard-1": 2,
+      "lcn-billboard-2": 5,
+      "lcn-billboard-3": 5
+    });
   });
 });

@@ -2269,10 +2269,10 @@ export class GameScene extends Phaser.Scene {
       { type: "generated", key: "lodz-detail-mural", offset: 4260, y: 496, scale: 0.16 },
       { type: "works", offset: 5200, y: 566, depth: 17 },
       { type: "generated", key: "lodz-detail-lcn", offset: 6140, y: 504, scale: 0.15 },
-      { type: "generated", key: "lodz-detail-cafe", offset: 7200, y: 502, scale: 0.14 },
+      { type: "generated", key: "lodz-detail-lcn", offset: 7200, y: 502, scale: 0.14 },
       { type: "generated", key: "lodz-detail-lcn", offset: 8280, y: 508, scale: 0.13 },
       { type: "generated", key: "lodz-detail-mural", offset: 9400, y: 496, scale: 0.15 },
-      { type: "generated", key: "lodz-detail-cafe", offset: 10520, y: 506, scale: 0.13 }
+      { type: "generated", key: "lodz-detail-mural", offset: 10520, y: 506, scale: 0.13 }
     ];
     return defs.map((def) => {
       const worldDistance = def.distance ?? this.distance + def.offset;

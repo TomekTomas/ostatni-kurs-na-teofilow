@@ -69,11 +69,19 @@ test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page 
     return {
       scooterHeight: scooter.displayHeight,
       cargoBikeHeight: cargoBike.displayHeight,
-      tramHeight: scene.tram.displayHeight
+      tramHeight: scene.tram.displayHeight,
+      cafes: scene.lodzDetails.filter((detail) => detail.detailKey === "lodz-detail-cafe").length,
+      lcnDetails: scene.lodzDetails.filter((detail) => detail.detailKey === "lodz-detail-lcn").length,
+      billboards: scene.lcnBillboards.map((billboard) => billboard.texture.key)
     };
   });
   expect(vehicleScale.scooterHeight).toBeLessThan(vehicleScale.tramHeight * 0.6);
   expect(vehicleScale.cargoBikeHeight).toBeLessThan(vehicleScale.tramHeight * 0.6);
+  expect(vehicleScale.cafes).toBe(1);
+  expect(vehicleScale.lcnDetails).toBe(3);
+  expect(vehicleScale.billboards).toHaveLength(12);
+  expect(vehicleScale.billboards.filter((key) => key === "lcn-billboard-2")).toHaveLength(5);
+  expect(vehicleScale.billboards.filter((key) => key === "lcn-billboard-3")).toHaveLength(5);
   await page.keyboard.press("p");
   await page.keyboard.press("u");
   await page.waitForFunction(() => window.__KURS8_GAME__.scene.getScene("GameScene").pauseSettingsLayer.visible === true);
