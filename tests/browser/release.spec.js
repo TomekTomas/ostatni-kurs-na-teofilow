@@ -87,6 +87,35 @@ test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page 
   await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.getScene("GameScene")?.finished === true);
   const summary = await page.evaluate(() => window.__KURS8_GAME__.scene.getScene("GameScene").runSummary);
   expect(summary).toMatchObject({ version: 1, completed: true });
+  const endLayout = await page.evaluate(() => {
+    const scene = window.__KURS8_GAME__.scene.getScene("GameScene");
+    const layer = scene.children.list.find((object) => object.type === "Container" && object.depth === 2200);
+    const plainBounds = (object) => {
+      const bounds = object.getBounds();
+      return { left: bounds.left, right: bounds.right, top: bounds.top, bottom: bounds.bottom };
+    };
+    const outerObject = layer.list.find((object) => object.name === "end-panel");
+    const outer = plainBounds(outerObject);
+    const report = plainBounds(layer.list.find((object) => object.name === "end-report-panel"));
+    const history = plainBounds(layer.list.find((object) => object.name === "end-history-panel"));
+    const summaryText = plainBounds(layer.list.find((object) => object.name === "end-summary"));
+    const missionsText = plainBounds(layer.list.find((object) => object.name === "end-missions"));
+    const achievementsObject = layer.list.find((object) => object.name === "end-achievements");
+    const achievements = achievementsObject ? plainBounds(achievementsObject) : null;
+    const overflowingText = layer.list
+      .filter((object) => object.type === "Text")
+      .filter((object) => {
+        const bounds = object.getBounds();
+        return bounds.left < outer.left + 8 || bounds.right > outer.right - 8 || bounds.top < outer.top + 8 || bounds.bottom > outer.bottom - 8;
+      })
+      .map((object) => object.text);
+    return { outer, report, history, summaryText, missionsText, achievements, overflowingText };
+  });
+  expect(endLayout.overflowingText).toEqual([]);
+  expect(endLayout.summaryText.right).toBeLessThanOrEqual(endLayout.report.right - 20);
+  expect(endLayout.missionsText.right).toBeLessThanOrEqual(endLayout.report.right - 20);
+  expect(endLayout.missionsText.bottom).toBeLessThanOrEqual(endLayout.report.bottom - 70);
+  if (endLayout.achievements) expect(endLayout.achievements.bottom).toBeLessThanOrEqual(endLayout.report.bottom - 20);
   expect(errors).toEqual([]);
 });
 

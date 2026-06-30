@@ -3378,15 +3378,18 @@ export class GameScene extends Phaser.Scene {
 
     const layer = this.add.container(0, 0).setDepth(2200);
     layer.add(this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x050607, 0.68).setOrigin(0));
-    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, 930, 500, 0x0d1318, 0.98)
-      .setStrokeStyle(5, 0xf4d35e, 1));
-    layer.add(this.add.rectangle(WIDTH / 2 - 150, HEIGHT / 2 + 12, 600, 400, 0x101820, 0.94)
-      .setStrokeStyle(2, 0x56636c, 1));
-    layer.add(this.add.rectangle(WIDTH / 2 + 270, HEIGHT / 2 + 12, 250, 400, 0x101820, 0.94)
-      .setStrokeStyle(2, 0x56636c, 1));
-    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2 - 206, 860, 14, 0x26323a, 0.9));
+    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2, 1060, 630, 0x0d1318, 0.98)
+      .setStrokeStyle(5, 0xf4d35e, 1)
+      .setName("end-panel"));
+    layer.add(this.add.rectangle(WIDTH / 2 - 165, HEIGHT / 2 + 48, 680, 490, 0x101820, 0.94)
+      .setStrokeStyle(2, 0x56636c, 1)
+      .setName("end-report-panel"));
+    layer.add(this.add.rectangle(WIDTH / 2 + 350, HEIGHT / 2 + 48, 310, 490, 0x101820, 0.94)
+      .setStrokeStyle(2, 0x56636c, 1)
+      .setName("end-history-panel"));
+    layer.add(this.add.rectangle(WIDTH / 2, HEIGHT / 2 - 258, 980, 12, 0x26323a, 0.9));
 
-    layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 218, title, {
+    layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 280, title, {
       fontSize: "28px",
       fontStyle: "700",
       color: "#f4efe4",
@@ -3396,7 +3399,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5));
 
     if (title !== "Kurs przerwany") {
-      layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 190, "Dyspozytor: dobra robota, skład na pętli.", {
+      layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 247, "Dyspozytor: dobra robota, skład na pętli.", {
         fontSize: "13px",
         fontStyle: "700",
         color: "#50d2c2",
@@ -3405,7 +3408,7 @@ export class GameScene extends Phaser.Scene {
       for (let i = 0; i < 28; i += 1) {
         const confetti = this.add.rectangle(
           WIDTH / 2 - 390 + i * 29,
-          HEIGHT / 2 - 232 + Phaser.Math.Between(-8, 14),
+          HEIGHT / 2 - 300 + Phaser.Math.Between(-5, 12),
           5,
           9,
           i % 3 === 0 ? 0xf4d35e : i % 3 === 1 ? 0x50d2c2 : 0xffb22e,
@@ -3415,68 +3418,71 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 166, `SCORE: ${finalScore}`, {
+    layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 216, `WYNIK: ${finalScore}`, {
       fontSize: "28px",
       fontStyle: "700",
       color: isRecord ? "#50d2c2" : "#ffb22e",
       align: "center"
     }).setOrigin(0.5));
     if (isRecord) {
-      layer.add(this.add.text(WIDTH / 2 + 186, HEIGHT / 2 - 158, "NEW RECORD", {
+      layer.add(this.add.text(WIDTH / 2 + 205, HEIGHT / 2 - 208, "NOWY REKORD", {
         fontSize: "13px",
         fontStyle: "700",
         color: "#50d2c2"
       }).setOrigin(0.5));
     }
 
-    this.addResultBars(layer, WIDTH / 2 - 420, HEIGHT / 2 - 132);
+    this.addResultBars(layer, WIDTH / 2 - 480, HEIGHT / 2 - 170);
 
     const lines = detail.split("\n");
-    const summary = lines.slice(0, 5).join("\n");
-    const missions = lines.slice(8, 13).join("\n");
-    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 - 52, "RAPORT KURSU", {
+    const summary = lines.slice(0, 7).join("\n");
+    const missions = lines.slice(8).join("\n");
+    layer.add(this.add.text(WIDTH / 2 - 480, HEIGHT / 2 - 95, "RAPORT KURSU", {
       fontSize: "16px",
       fontStyle: "700",
       color: "#f4d35e"
     }));
-    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 - 25, summary, {
-      fontSize: "12px",
+    layer.add(this.add.text(WIDTH / 2 - 480, HEIGHT / 2 - 67, summary, {
+      fontSize: "11px",
       color: "#d9d3c4",
       align: "left",
-      lineSpacing: 2,
-      wordWrap: { width: 550, useAdvancedWrap: true }
-    }));
-    layer.add(this.add.rectangle(WIDTH / 2 - 150, HEIGHT / 2 + 92, 550, 2, 0x34434b, 1));
-    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 + 112, "CELE", {
+      lineSpacing: 1,
+      wordWrap: { width: 620, useAdvancedWrap: true }
+    }).setName("end-summary"));
+    layer.add(this.add.rectangle(WIDTH / 2 - 165, HEIGHT / 2 + 37, 620, 2, 0x34434b, 1));
+    layer.add(this.add.text(WIDTH / 2 - 480, HEIGHT / 2 + 55, "CELE", {
       fontSize: "16px",
       fontStyle: "700",
       color: "#f4d35e"
     }));
-    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 + 140, missions, {
-      fontSize: "12px",
+    layer.add(this.add.text(WIDTH / 2 - 480, HEIGHT / 2 + 82, missions, {
+      fontSize: "11px",
       color: "#f4efe4",
       align: "left",
-      lineSpacing: 2,
-      wordWrap: { width: 550, useAdvancedWrap: true }
-    }));
-    this.addHistoryPanel(layer, WIDTH / 2 + 160, HEIGHT / 2 - 145, history);
-    layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 + 205, `Rekord: ${Math.max(finalScore, highScore)}`, {
+      lineSpacing: 1,
+      wordWrap: { width: 620, useAdvancedWrap: true }
+    }).setName("end-missions"));
+    this.addHistoryPanel(layer, WIDTH / 2 + 215, HEIGHT / 2 - 180, history, 270);
+    layer.add(this.add.text(WIDTH / 2 - 480, HEIGHT / 2 + 258, `Rekord: ${Math.max(finalScore, highScore)}`, {
       fontSize: "14px",
       color: "#f4efe4"
     }));
-    layer.add(this.add.text(WIDTH / 2 + 410, HEIGHT / 2 + 205, "R: jeszcze raz    Esc: menu", {
+    layer.add(this.add.text(WIDTH / 2 + 480, HEIGHT / 2 + 258, "R: jeszcze raz    Esc: menu", {
       fontSize: "15px",
       fontStyle: "700",
       color: "#f4d35e"
     }).setOrigin(1, 0));
     if (recorded.newlyUnlocked.length) {
-      layer.add(this.add.text(WIDTH / 2 - 420, HEIGHT / 2 + 181, `Nowe osiągnięcia: ${recorded.newlyUnlocked.map(({ label }) => label).join(", ")}`, {
-        fontSize: "10px", fontStyle: "700", color: "#50d2c2", wordWrap: { width: 560, useAdvancedWrap: true }
-      }));
+      const unlockedLabels = recorded.newlyUnlocked.map(({ label }) => label);
+      const visibleLabels = unlockedLabels.slice(0, 3).join(", ");
+      const remainingLabel = unlockedLabels.length > 3 ? ` i jeszcze ${unlockedLabels.length - 3}` : "";
+      layer.add(this.add.text(WIDTH / 2 - 480, HEIGHT / 2 + 192, `Nowe osiągnięcia: ${visibleLabels}${remainingLabel}`, {
+        fontSize: "10px", fontStyle: "700", color: "#50d2c2", wordWrap: { width: 620, useAdvancedWrap: true }
+      }).setName("end-achievements"));
     }
     if (this.challenge) {
       const dailyBest = this.profile.stats.dailyBest[this.challenge.date] || finalScore;
-      layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 + 238, `Rekord dnia: ${dailyBest}`, {
+      layer.add(this.add.text(WIDTH / 2 + 350, HEIGHT / 2 + 200, `Rekord dnia: ${dailyBest}`, {
         fontSize: "11px", fontStyle: "700", color: "#8fb7e8"
       }).setOrigin(0.5));
     }
@@ -3498,7 +3504,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  addHistoryPanel(layer, x, y, history) {
+  addHistoryPanel(layer, x, y, history, width = 270) {
     layer.add(this.add.text(x, y, "OSTATNIE KURSY", {
       fontSize: "16px",
       fontStyle: "700",
@@ -3509,20 +3515,21 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     history.slice(0, 4).forEach((run, index) => {
-      const yy = y + 34 + index * 52;
+      const yy = y + 34 + index * 66;
       const color = index === 0 ? 0xf4d35e : 0x56636c;
-      layer.add(this.add.rectangle(x + 110, yy + 18, 220, 44, 0x0d1318, 0.96)
+      layer.add(this.add.rectangle(x + width / 2, yy + 24, width, 56, 0x0d1318, 0.96)
         .setStrokeStyle(1, color, index === 0 ? 0.95 : 0.65));
-      layer.add(this.add.text(x + 8, yy + 3, `${index + 1}. ${run.score}  ${run.grade}`, {
+      layer.add(this.add.text(x + 10, yy + 3, `${index + 1}. ${run.score}  ${run.grade}`, {
         fontSize: "13px",
         fontStyle: "700",
         color: index === 0 ? "#ffb22e" : "#f4efe4"
       }));
-      layer.add(this.add.text(x + 8, yy + 22, `${run.mode} | ${run.vehicle.replace("Konstal ", "").replace("Pesa ", "")}`, {
+      layer.add(this.add.text(x + 10, yy + 24, `${run.mode} | ${run.vehicle.replace("Konstal ", "").replace("Pesa ", "")}`, {
         fontSize: "9px",
-        color: "#d9d3c4"
+        color: "#d9d3c4",
+        wordWrap: { width: width - 20, useAdvancedWrap: true }
       }));
-      layer.add(this.add.text(x + 8, yy + 34, `Płyn. ${run.smoothness}%  Zad. ${run.satisfaction}%`, {
+      layer.add(this.add.text(x + 10, yy + 40, `Płyn. ${run.smoothness}%  Zad. ${run.satisfaction}%`, {
         fontSize: "9px",
         color: "#8ea0a8"
       }));
