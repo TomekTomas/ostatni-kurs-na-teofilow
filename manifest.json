@@ -1,5 +1,5 @@
 {
-  "name": "Ostatni Kurs na Teofilow",
+  "name": "Ostatni Kurs na Teofilów",
   "short_name": "Kurs 8",
   "start_url": "./game.html",
   "scope": "./",
@@ -7,6 +7,7 @@
   "orientation": "landscape",
   "theme_color": "#10131a",
   "background_color": "#10131a",
+  "description": "Tramwajowa gra arcade na trasie linii 8 w Łodzi, autorstwa Tomasza Tomasa.",
   "icons": [
     {
       "src": "assets/icons/icon-192.png",

@@ -9,7 +9,6 @@ export const MENU_ASSET_PATHS = [
   "assets/trams/tram-konstal.png",
   "assets/trams/tram-pesa.png",
   "assets/backgrounds/bg-piotrkowska.png",
-  "assets/branding/lcn-logo-menu.png",
   ...UI_ASSETS.map((key) => `assets/ui/${key}.png`)
 ];
 
@@ -27,7 +26,6 @@ export function queueMenuAssets(scene) {
   scene.load.image("tram-konstal", "assets/trams/tram-konstal.png");
   scene.load.image("tram-pesa", "assets/trams/tram-pesa.png");
   scene.load.image("bg-piotrkowska", "assets/backgrounds/bg-piotrkowska.png");
-  scene.load.image("lcn-logo-menu", "assets/branding/lcn-logo-menu.png");
   UI_ASSETS.forEach((key) => scene.load.image(key, `assets/ui/${key}.png`));
 }
 
@@ -61,7 +59,6 @@ export function queueGameAssets(scene) {
   scene.load.image("lodz-detail-lcn", "assets/generated/lodz-detail-lcn.png");
   scene.load.image("lodz-detail-mural", "assets/generated/lodz-detail-mural.png");
   scene.load.image("lodz-detail-cafe", "assets/generated/lodz-detail-cafe.png");
-  scene.load.image("lodz-detail-works", "assets/generated/lodz-detail-works-alpha.png");
   scene.load.image("landmark-znicze", "assets/generated/landmark-znicze.png");
   scene.load.image("landmark-drzewo", "assets/generated/landmark-drzewo.png");
   scene.load.image("landmark-smolarek-mural", "assets/generated/landmark-smolarek-mural.png");

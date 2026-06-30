@@ -23,7 +23,7 @@ const config = {
 
 window.addEventListener("load", () => {
   if (!window.Phaser) {
-    document.getElementById("game").innerHTML = "<p style='padding:24px;color:#f4efe4;font:20px Lexend Deca, Segoe UI, sans-serif'>Nie udalo sie zaladowac Phaser 3 z CDN.</p>";
+    document.getElementById("game").innerHTML = "<p style='padding:24px;color:#f4efe4;font:20px Lexend Deca, Segoe UI, sans-serif'>Nie udało się załadować Phaser 3 z CDN.</p>";
     return;
   }
   const originalTextFactory = Phaser.GameObjects.GameObjectFactory.prototype.text;

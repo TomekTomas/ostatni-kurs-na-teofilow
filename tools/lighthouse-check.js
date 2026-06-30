@@ -12,14 +12,14 @@ const server = spawn(process.execPath, ["tools/dev-server.js"], {
 run().finally(() => server.kill());
 
 async function run() {
-  await waitForServer(`http://127.0.0.1:${port}/landing.html`);
+  await waitForServer(`http://127.0.0.1:${port}/`);
   const [{ launch }, { default: lighthouse }] = await Promise.all([
     import("chrome-launcher"),
     import("lighthouse")
   ]);
   const chrome = await launch({ chromePath: chromium.executablePath(), chromeFlags: ["--headless", "--no-sandbox"] });
   try {
-    const result = await lighthouse(`http://127.0.0.1:${port}/landing.html`, {
+    const result = await lighthouse(`http://127.0.0.1:${port}/`, {
       port: chrome.port,
       output: "json",
       logLevel: "error",

@@ -20,7 +20,7 @@ describe("trasa linii 8", () => {
 
   it("zaczyna sie na Cm. Zarzew i konczy na Teofilowie", () => {
     expect(STOPS[0].name).toBe("Cm. Zarzew");
-    expect(STOPS.at(-1).name).toBe("Teofilow");
+    expect(STOPS.at(-1).name).toBe("Teofilów");
   });
 
   it("odleglosci przystankow sa scisle rosnace", () => {
@@ -47,11 +47,11 @@ describe("trasa linii 8", () => {
   });
 
   it("shortLabel zostawia krotkie nazwy bez zmian", () => {
-    expect(shortLabel("Teofilow", 12)).toBe("Teofilow");
+    expect(shortLabel("Teofilów", 12)).toBe("Teofilów");
   });
 
   it("shortLabel skraca dlugie nazwy przystankow", () => {
-    expect(shortLabel("Mickiewicza (Dw. L. Kaliska)", 18)).toBe("Mickiewicza (Dw...");
+    expect(shortLabel("Mickiewicza (Dw. Ł. Kaliska)", 18)).toBe("Mickiewicza (Dw...");
   });
 
   it("scheduleDeltaForStop zwraca zero przy czasie zgodnym z rozkladem", () => {
@@ -67,7 +67,7 @@ describe("trasa linii 8", () => {
     const elapsedTime = scheduleTimeForStop({ stop, scheduleDuration }) - 25;
     const delta = scheduleDeltaForStop({ stop, elapsedTime, scheduleDuration });
     expect(classifyScheduleDelta(delta)).toBe("early");
-    expect(scheduleLabel(delta)).toBe("za wczesnie 25s");
+    expect(scheduleLabel(delta)).toBe("za wcześnie 25s");
   });
 
   it("scheduleDeltaForStop rozpoznaje opoznienie", () => {
@@ -76,7 +76,7 @@ describe("trasa linii 8", () => {
     const elapsedTime = scheduleTimeForStop({ stop, scheduleDuration }) + 31;
     const delta = scheduleDeltaForStop({ stop, elapsedTime, scheduleDuration });
     expect(classifyScheduleDelta(delta)).toBe("late");
-    expect(scheduleLabel(delta)).toBe("spoznienie 31s");
+    expect(scheduleLabel(delta)).toBe("spóźnienie 31s");
   });
 
   it("scheduleDeltaForStop ma tolerancje punktualnosci do 18 sekund", () => {

@@ -7,7 +7,7 @@ test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page 
   });
   page.on("pageerror", (error) => errors.push(error.message));
 
-  await page.goto("/landing.html");
+  await page.goto("/");
   await page.locator(".play-button").click();
   await expect(page).toHaveURL(/game\.html/);
   await expect(page.locator("canvas")).toBeVisible();
@@ -19,11 +19,16 @@ test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page 
     const recordText = scene.modeRecordText.getBounds();
     const modePanel = scene.modePanel.getBounds();
     const modeDescription = scene.modeDescription.getBounds();
+    const titlePlaque = scene.children.list.find((object) => object.texture?.key === "title-plaque").getBounds();
+    const firstTab = scene.tabButtons[0].bg.getBounds();
     const recordLines = scene.children.list
       .filter((object) => object.type === "Text" && object.x === 98 && object.y >= 172 && object.y <= 276)
       .sort((first, second) => first.y - second.y)
       .map((object) => object.getBounds());
     return {
+      tabLabels: scene.tabButtons.map((button) => button.label),
+      titleToTabsGap: firstTab.top - titlePlaque.bottom,
+      tabsToPanelsGap: recordPanel.top - firstTab.bottom,
       recordTextBottom: recordText.bottom,
       recordPanelBottom: recordPanel.bottom,
       modeDescriptionBottom: modeDescription.bottom,
@@ -32,10 +37,13 @@ test("landing -> menu -> wyzwanie -> GameScene -> ekran koncowy", async ({ page 
     };
   });
   expect(menuLayout.recordTextBottom).toBeLessThanOrEqual(menuLayout.recordPanelBottom - 4);
+  expect(menuLayout.tabLabels).toEqual(["GRAJ", "WYZWANIE", "OSIĄGNIĘCIA", "USTAWIENIA"]);
+  expect(menuLayout.titleToTabsGap).toBeGreaterThanOrEqual(6);
+  expect(menuLayout.tabsToPanelsGap).toBeGreaterThanOrEqual(8);
   expect(menuLayout.modeDescriptionBottom).toBeLessThanOrEqual(menuLayout.modePanelBottom - 6);
   expect(menuLayout.minimumRecordGap).toBeGreaterThanOrEqual(4);
 
-  await clickCanvas(page, 380, 142);
+  await clickCanvas(page, 500, 128);
   await clickCanvas(page, 960, 410);
   await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("GameScene"), null, { timeout: 30_000 });
   const hudLayout = await page.evaluate(() => {

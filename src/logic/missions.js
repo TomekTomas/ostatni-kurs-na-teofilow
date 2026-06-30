@@ -10,13 +10,13 @@ export function missionResults({
   totalSwitches = SWITCHES.length
 } = {}) {
   return [
-    { label: "Dojedz do Teofilowa", ok: !interrupted },
-    { label: "Obsluz wszystkie przystanki", ok: stats.missedStops === 0 && stats.servedStops >= totalStops },
-    { label: "Plynnosc minimum 75%", ok: smoothness >= 75 },
+    { label: "Dojedź do Teofilowa", ok: !interrupted },
+    { label: "Obsłuż wszystkie przystanki", ok: stats.missedStops === 0 && stats.servedStops >= totalStops },
+    { label: "Płynność minimum 75%", ok: smoothness >= 75 },
     { label: "Zadowolenie minimum 70%", ok: satisfaction >= 70 },
-    { label: "Punktualnosc minimum 70%", ok: punctuality >= 70 },
+    { label: "Punktualność minimum 70%", ok: punctuality >= 70 },
     { label: "Bez przejazdu na czerwonym", ok: stats.redSignals === 0 },
-    { label: "Zwrotnice bez pomylki", ok: stats.switchWrong === 0 && stats.switchCorrect >= totalSwitches }
+    { label: "Zwrotnice bez pomyłki", ok: stats.switchWrong === 0 && stats.switchCorrect >= totalSwitches }
   ];
 }
 

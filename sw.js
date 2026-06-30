@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v10";
+const CACHE_VERSION = "v11";
 const SHELL_CACHE = `kurs8-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `kurs8-runtime-${CACHE_VERSION}`;
 const PHASER_URL = "https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js";
@@ -44,7 +44,6 @@ const SHELL_URLS = [
   "./assets/trams/tram-konstal.png",
   "./assets/trams/tram-pesa.png",
   "./assets/backgrounds/bg-piotrkowska.png",
-  "./assets/branding/lcn-logo-menu.png",
   "./assets/branding/landing-tram.webp",
   "./assets/ui/button-danger.png",
   "./assets/ui/button-primary.png",
@@ -95,7 +94,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(networkFirst(event.request, SHELL_CACHE, "./game.html"));
     return;
   }
-  if (/\.(?:png|webp|ogg|woff2)$/.test(url.pathname)) {
+  if (/\.(?:png|jpe?g|webp|ogg|woff2)$/.test(url.pathname)) {
     event.respondWith(cacheFirst(event.request, RUNTIME_CACHE));
     return;
   }

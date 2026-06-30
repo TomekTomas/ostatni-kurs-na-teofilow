@@ -48,5 +48,5 @@ http.createServer((req, res) => {
     res.end(data);
   });
 }).listen(port, "127.0.0.1", () => {
-  console.log(`Ostatni Kurs na Teofilow: http://127.0.0.1:${port}`);
+  console.log(`Ostatni Kurs na Teofilów: http://127.0.0.1:${port}`);
 });

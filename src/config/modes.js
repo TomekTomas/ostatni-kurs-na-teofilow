@@ -1,7 +1,7 @@
 export const GAME_MODES = {
   last: {
     label: "Ostatni kurs",
-    description: "Pelna trasa, normalny ruch, liczy sie komplet przystankow i plynna jazda",
+    description: "Pełna trasa, normalny ruch, liczy się komplet przystanków i płynna jazda",
     timeLimit: 860,
     traffic: 1,
     eventPressure: 1,
@@ -15,7 +15,7 @@ export const GAME_MODES = {
   },
   training: {
     label: "Trening",
-    description: "Dluzszy czas, mniej ruchu, bledy nie koncza kursu od razu",
+    description: "Dłuższy czas, mniej ruchu, błędy nie kończą kursu od razu",
     timeLimit: 1260,
     traffic: 0.75,
     eventPressure: 0.65,
@@ -29,7 +29,7 @@ export const GAME_MODES = {
   },
   rush: {
     label: "Godziny szczytu",
-    description: "Wiecej aut i pasazerow, ciasniejszy rozklad, kary bola mocniej",
+    description: "Więcej aut i pasażerów, ciaśniejszy rozkład, kary bolą mocniej",
     timeLimit: 720,
     traffic: 2.25,
     eventPressure: 1.35,
@@ -43,7 +43,7 @@ export const GAME_MODES = {
   },
   night: {
     label: "Nocny kurs",
-    description: "Ciemniej, mniej ruchu, szybsze przeloty i krotsze postoje",
+    description: "Ciemniej, mniej ruchu, szybsze przeloty i krótsze postoje",
     timeLimit: 900,
     traffic: 0.55,
     eventPressure: 0.8,
@@ -56,4 +56,3 @@ export const GAME_MODES = {
     allowGameOver: true
   }
 };
-

@@ -2,22 +2,123 @@
 <html lang="pl">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-    <meta http-equiv="refresh" content="0; url=landing.html">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#10131a">
-    <title>Ostatni Kurs na Teofilow</title>
+    <meta name="description" content="Ostatni Kurs na Teofilów - tramwajowa gra arcade na prawdziwej trasie linii 8 w Łodzi.">
+    <meta name="author" content="Tomasz Tomas">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pl_PL">
+    <meta property="og:site_name" content="Ostatni Kurs na Teofilów">
+    <meta property="og:title" content="Ostatni Kurs na Teofilów">
+    <meta property="og:description" content="Poprowadź tramwaj linii 8 przez 34 łódzkie przystanki. Zagraj bezpłatnie w przeglądarce.">
+    <meta property="og:url" content="https://gra.tomasztomas.pl/">
+    <meta property="og:image" content="https://gra.tomasztomas.pl/assets/branding/social-preview.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Tramwaj z gry Ostatni Kurs na Teofilów">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Ostatni Kurs na Teofilów">
+    <meta name="twitter:description" content="Poprowadź tramwaj linii 8 przez 34 łódzkie przystanki.">
+    <meta name="twitter:image" content="https://gra.tomasztomas.pl/assets/branding/social-preview.jpg">
+    <title>Ostatni Kurs na Teofilów</title>
+    <link rel="canonical" href="https://gra.tomasztomas.pl/">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/icons/icon-192.png">
+    <link rel="preload" href="assets/fonts/lexend-deca-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/branding/landing-tram.webp" as="image" type="image/webp" fetchpriority="high">
     <link rel="stylesheet" href="landing.css">
   </head>
   <body>
-    <main class="hero" id="top">
-      <div class="hero-copy">
-        <p class="eyebrow">Ostatni Kurs na Teofilow</p>
-        <h1>Przejdz do strony startowej</h1>
-        <p class="subtitle">Za chwile otworzy sie landing projektu.</p>
-        <a class="play-button" href="landing.html">START</a>
-      </div>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Kurs 8 - Ostatni Kurs na Teofilów">
+        <span class="brand-mark" aria-hidden="true">TT</span>
+        <span>Kurs 8</span>
+      </a>
+      <nav aria-label="Nawigacja">
+        <a href="#trasa">Trasa</a>
+        <a href="#autor">Autor</a>
+        <a class="nav-play" href="game.html">Graj</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Linia 8 / Zarzew - Teofilów</p>
+          <h1>Ostatni Kurs na Teofilów</h1>
+          <p class="subtitle">Tramwajowa gra arcade na trasie linii 8 w Łodzi</p>
+          <a class="play-button" href="game.html">GRAJ</a>
+        </div>
+        <div class="hero-panel reveal" aria-label="Podgląd trasy gry">
+          <div class="tram-window">
+            <img src="assets/branding/landing-tram.webp" alt="Tramwaj Konstal 805Na" width="760" height="175" fetchpriority="high">
+          </div>
+          <div class="hero-route">
+            <span>Cm. Zarzew</span>
+            <span>Piotrkowska Centrum</span>
+            <span>Teofilów</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="features" aria-label="Najważniejsze cechy">
+        <article class="feature-card reveal">
+          <strong>34 przystanki prawdziwej trasy</strong>
+          <span>Od cmentarza na Zarzewie do pętli na Teofilowie.</span>
+        </article>
+        <article class="feature-card reveal">
+          <strong>2 tramwaje: Konstal 805Na i Pesa Swing</strong>
+          <span>Inne hamowanie, przyspieszenie i komfort jazdy.</span>
+        </article>
+        <article class="feature-card reveal">
+          <strong>4 tryby gry</strong>
+          <span>Ostatni kurs, trening, godziny szczytu i nocny przejazd.</span>
+        </article>
+        <article class="feature-card reveal">
+          <strong>Zwrotnice, sygnalizacja, ruch uliczny</strong>
+          <span>Reaguj na miasto, rozkład i losowe utrudnienia.</span>
+        </article>
+      </section>
+
+      <section id="trasa" class="route-section reveal">
+        <div class="section-heading">
+          <p class="eyebrow">Podgląd trasy</p>
+          <h2>Kluczowe punkty linii 8</h2>
+        </div>
+        <ol class="route-line">
+          <li><span>Cm. Zarzew</span></li>
+          <li><span>Widzew Stadion</span></li>
+          <li><span>Piotrkowska Centrum</span></li>
+          <li><span>Dw. Łódź Kaliska</span></li>
+          <li><span>Włókniarzy</span></li>
+          <li><span>Teofilów</span></li>
+        </ol>
+      </section>
+
+      <section id="autor" class="creator-section reveal">
+        <div class="creator-mark" aria-hidden="true">TT</div>
+        <div>
+          <p class="eyebrow">Autorski projekt</p>
+          <h2>Gra stworzona przez Tomasza Tomasa</h2>
+          <p>
+            Osobista, łódzka pocztówka z trasy linii 8: z prawdziwymi
+            przystankami, miejskim klimatem i presją ostatniego kursu.
+          </p>
+        </div>
+      </section>
     </main>
+
+    <footer>
+      <span>Ostatni Kurs na Teofilów</span>
+      <span>Autor: Tomasz Tomas / Phaser 3</span>
+    </footer>
+
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

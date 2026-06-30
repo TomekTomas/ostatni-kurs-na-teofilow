@@ -1,14 +1,14 @@
 export const BG_LABELS = {
   zarzew: "Zarzew / cmentarz",
-  "widzew-wschod": "Widzew Wschod",
-  rokicinska: "Rokicinska",
+  "widzew-wschod": "Widzew Wschód",
+  rokicinska: "Rokicińska",
   widzew: "Widzew i stadion",
-  wima: "Ksiezy Mlyn / Wi-Ma",
-  centrum: "Kamienice Lodzkie",
-  piotrkowska: "Stajnia Jednorozcow",
+  wima: "Księży Młyn / Wi-Ma",
+  centrum: "Kamienice Łódzkie",
+  piotrkowska: "Stajnia Jednorożców",
   kaliska: "Atlas Arena / Kaliska",
-  wlokniarzy: "Wlokniarzy",
-  teofilow: "Teofilow"
+  wlokniarzy: "Włókniarzy",
+  teofilow: "Teofilów"
 };
 
 export const DISTRICT_PROFILES = {
@@ -28,8 +28,8 @@ export const DISTRICT_PROFILES = {
     windows: 0.62,
     tint: 0xdbe8f0,
     dispatch: [
-      "Dyspozytor: Widzew Wschod, wiecej pieszych przy przejsciach.",
-      "Dyspozytor: osiedle przed Toba, pilnuj hamowania przed przystankami."
+      "Dyspozytor: Widzew Wschód, więcej pieszych przy przejściach.",
+      "Dyspozytor: osiedle przed Tobą, pilnuj hamowania przed przystankami."
     ]
   },
   rokicinska: {
@@ -37,7 +37,7 @@ export const DISTRICT_PROFILES = {
     pedestrians: 0.95,
     windows: 0.5,
     tint: 0xd6e0da,
-    dispatch: ["Dyspozytor: Rokicinska czysta, ale uwazaj na torowisko po prawej."]
+    dispatch: ["Dyspozytor: Rokicińska czysta, ale uważaj na torowisko po prawej."]
   },
   widzew: {
     traffic: 1.35,
@@ -45,8 +45,8 @@ export const DISTRICT_PROFILES = {
     windows: 0.7,
     tint: 0xf0ded2,
     dispatch: [
-      "Dyspozytor: okolice stadionu, spodziewaj sie wiekszego ruchu.",
-      "Dyspozytor: nie gon rozkladu przez stadion, czerwone dalej kosztuje."
+      "Dyspozytor: okolice stadionu, spodziewaj się większego ruchu.",
+      "Dyspozytor: nie goń rozkładu przez stadion, czerwone dalej kosztuje."
     ]
   },
   wima: {
@@ -54,7 +54,7 @@ export const DISTRICT_PROFILES = {
     pedestrians: 1.05,
     windows: 0.54,
     tint: 0xe0d4c5,
-    dispatch: ["Dyspozytor: Wi-Ma i stare torowisko, jedz plynnie na nastawniku."]
+    dispatch: ["Dyspozytor: Wi-Ma i stare torowisko, jedź płynnie na nastawniku."]
   },
   centrum: {
     traffic: 1.52,
@@ -62,8 +62,8 @@ export const DISTRICT_PROFILES = {
     windows: 0.92,
     tint: 0xf1e2c5,
     dispatch: [
-      "Dyspozytor: centrum, korki i piesi, trzymaj oczy na sygnalach.",
-      "Dyspozytor: Piotrkowska blisko, punktualnosc wazna, ale bez szarpania."
+      "Dyspozytor: centrum, korki i piesi, trzymaj oczy na sygnałach.",
+      "Dyspozytor: Piotrkowska blisko, punktualność ważna, ale bez szarpania."
     ]
   },
   piotrkowska: {
@@ -71,28 +71,28 @@ export const DISTRICT_PROFILES = {
     pedestrians: 1.7,
     windows: 1,
     tint: 0xf4d35e,
-    dispatch: ["Dyspozytor: przesiadkowe centrum, postaraj sie o czysty stop."]
+    dispatch: ["Dyspozytor: przesiadkowe centrum, postaraj się o czysty postój."]
   },
   kaliska: {
     traffic: 1.28,
     pedestrians: 1.25,
     windows: 0.74,
     tint: 0xd8e2e8,
-    dispatch: ["Dyspozytor: przed Kaliska pamietaj o skrecie we Wlokniarzy."]
+    dispatch: ["Dyspozytor: przed Kaliską pamiętaj o skręcie we Włókniarzy."]
   },
   wlokniarzy: {
     traffic: 1.2,
     pedestrians: 1,
     windows: 0.56,
     tint: 0xd8d6ca,
-    dispatch: ["Dyspozytor: Wlokniarzy dlugi przelot, trzymaj tempo i nie przestrzel przystanku."]
+    dispatch: ["Dyspozytor: Włókniarzy, długi przelot. Trzymaj tempo i nie przestrzel przystanku."]
   },
   teofilow: {
     traffic: 0.75,
     pedestrians: 0.7,
     windows: 0.46,
     tint: 0xd2dbe5,
-    dispatch: ["Dyspozytor: Teofilow coraz blizej, dowiez sklad do konca."]
+    dispatch: ["Dyspozytor: Teofilów coraz bliżej, dowieź skład do końca."]
   }
 };
 
@@ -141,6 +141,5 @@ export const MAP_LABELS = {
   piotrkowska: "Centrum",
   mickiewicza: "Kaliska",
   lutomierska: "Lutom.",
-  teofilow: "Teofilow"
+  teofilow: "Teofilów"
 };
-

@@ -72,8 +72,8 @@ const stopDistances = stopKm.map((km) => Math.round(km * routeScale));
 const stopNames = [...stopBlock.matchAll(/name: "([^"]+)"/g)].map((m) => m[1]);
 
 if (stopDistances.length !== 34) fail(`Route 8 should have 34 stops, found ${stopDistances.length}`);
-if (stopNames[0] !== "Cm. Zarzew" || stopNames[stopNames.length - 1] !== "Teofilow") {
-  fail("Route 8 should run from Cm. Zarzew to Teofilow");
+if (stopNames[0] !== "Cm. Zarzew" || stopNames[stopNames.length - 1] !== "Teofilów") {
+  fail("Route 8 should run from Cm. Zarzew to Teofilów");
 }
 if (Math.abs(stopKm[stopKm.length - 1] - 16.7) > 0.01) {
   fail(`Route 8 length should be 16.7 km, found ${stopKm[stopKm.length - 1]} km`);
@@ -97,8 +97,7 @@ for (const key of ["tram-konstal-open", "tram-pesa-open", "station-long", "stati
 }
 
 for (const file of [
-  "assets/branding/lcn-logo-menu.png",
-  "assets/branding/lcn-billboard-generated.png",
+  "assets/branding/social-preview.jpg",
   "assets/branding/lcn-billboard-1.png",
   "assets/branding/lcn-billboard-2.png",
   "assets/branding/lcn-billboard-3.png",
@@ -171,7 +170,7 @@ expectSource(/scheduleDuration/, "Game should track a route timetable, not only 
 expectSource(/scheduleDeltaForStop\(/, "Stops should be evaluated against the timetable");
 expectSource(/applyScheduleResult\(/, "Punctuality should affect scoring and passenger comfort");
 expectSource(/scheduleText/, "HUD should show timetable delta and punctuality");
-expectSource(/Punktualnosc minimum 70%/, "Mission results should include a punctuality goal");
+expectSource(/Punktualność minimum 70%/, "Mission results should include a punctuality goal");
 expectSource(/modeBadgeBg = this\.add\.rectangle\(leftX \+ 10, topY \+ 72, leftW - 20, 18/, "Mode and switch HUD should be compact and stay inside the top-left panel");
 expectSource(/this\.scheduleText = this\.add\.text\(rightX \+ 16, topY \+ 52/, "Top-right HUD should reserve a separate schedule row");
 expectSource(/this\.throttleBg = this\.add\.rectangle\(leftX \+ 56, topY \+ 60/, "Speed and driving bars should be grouped in the left vehicle-status HUD");
@@ -183,7 +182,8 @@ expectSource(/pendingBoardingVisual/, "Onboard passengers should appear in windo
 expectSource(/this\.add\.image\(70, 488, "panel-dark"\)/, "Menu mode panel should be contained on the start screen");
 expectSource(/key: "lodz-detail-lcn"/, "Lodz details should include LCN easter egg signage");
 expectSource(/lodz-detail-lcn/, "Generated Lodz detail images should replace simple procedural billboards");
-expectSource(/assets\/generated\/lodz-detail-works-alpha\.png/, "Roadworks easter egg should use a transparent generated bitmap asset");
+expectSource(/\{ type: "works", offset: 5200, y: 566, depth: 17 \}/, "Roadworks detail should stay behind the player tram");
+expectSource(/def\.type === "works"[\s\S]*roadworks-truck-side[\s\S]*prop-road-barrier[\s\S]*prop-road-cone/, "Roadworks detail should use clean transparent sprites");
 expectSource(/landmark-znicze/, "Route should include a generated cemetery candle kiosk landmark");
 expectSource(/landmark-znicze", distance: Math\.round\(0\.02 \* ROUTE_SCALE\)/, "Cemetery candle kiosk should appear at the starting cemetery, not later in Widzew");
 expectSource(/landmark-drzewo/, "Route should include the Widzew Wschod Drzewo sculpture landmark");
@@ -215,7 +215,7 @@ expectSource(/addFeedback\(/, "Gameplay penalties should produce readable player
 expectSource(/BASE_WIDTH/, "Game should keep a base 16:9 width for desktop layouts");
 expectSource(/visualViewport/, "Mobile landscape should expand the logical game width to match wide phone screens");
 expectSource(/orientationchange/, "Mobile orientation changes should rebuild the Phaser canvas with the correct aspect ratio");
-expectHtml(/user-scalable=no/, "Mobile viewport should prevent accidental zoom during play");
+if (/user-scalable=no/.test(html)) fail("Mobile viewport should allow browser zoom for accessibility");
 expectCss(/touch-action:\s*none/, "Mobile CSS should prevent browser gestures from stealing gameplay input");
 expectCss(/100dvw/, "Game container should fill the dynamic mobile viewport width");
 expectCss(/100dvh/, "Game container should fill the dynamic mobile viewport height");

@@ -4,6 +4,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const failures = [];
 
 for (const key of ["name", "short_name", "start_url", "display", "theme_color", "background_color", "icons"]) {
@@ -14,6 +15,10 @@ if (!sw.includes("const SHELL_URLS")) failures.push("service worker shell list m
 if (!sw.includes("PHASER_URL")) failures.push("Phaser runtime cache missing");
 if (!sw.includes("supabase.co")) failures.push("Supabase network bypass missing");
 if (/sprite-sheet|source-sheet/.test(sw)) failures.push("source sprite sheets must not be precached");
+if (!index.includes('property="og:image"')) failures.push("landing Open Graph image missing");
+if (!index.includes("Tomasz Tomas")) failures.push("personal creator branding missing from landing");
+if (!fs.existsSync(path.join(root, "assets/branding/social-preview.jpg"))) failures.push("social preview image missing");
+if (/user-scalable=no/.test(index)) failures.push("landing must allow browser zoom");
 
 const shellBlock = sw.match(/const SHELL_URLS = \[([\s\S]*?)\];/)?.[1] || "";
 for (const match of shellBlock.matchAll(/"\.\/(.*?)"/g)) {

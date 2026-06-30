@@ -11,7 +11,6 @@ import { createSeededRng } from "../logic/random.js";
 import { createRunSummary } from "../logic/runSummary.js";
 import { loadProfile, recordRun, saveProfile } from "../services/profile.js";
 import { loadSettings, saveSettings } from "../services/settings.js";
-import { submitRun } from "../services/leaderboard.js";
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -139,7 +138,7 @@ export class GameScene extends Phaser.Scene {
     this.sys.events.once("shutdown", () => {
       this.cleanupScene();
     });
-    this.showMessage(`${this.mode.label}: dowiez pasazerow na Teofilow`, 2400, "#f4d35e");
+    this.showMessage(`${this.mode.label}: dowieź pasażerów na Teofilów`, 2400, "#f4d35e");
   }
 
   createWorld() {
@@ -251,7 +250,7 @@ export class GameScene extends Phaser.Scene {
       const cardOffsetX = isUnicornStop ? -190 : -118;
       const labelOffsetX = cardOffsetX + 16;
       const card = this.add.image(this.screenX(stop.distance) + cardOffsetX, 404, "stop-card").setOrigin(0).setScale(isUnicornStop ? 0.92 : 0.82, isUnicornStop ? 0.86 : 0.82).setVisible(false);
-      const stopSubtitle = isUnicornStop ? "Stajnia Jednorozcow" : stop.street;
+      const stopSubtitle = isUnicornStop ? "Stajnia Jednorożców" : stop.street;
       const label = this.add.text(this.screenX(stop.distance) + labelOffsetX, 418, `${stop.name}\n${stopSubtitle}`, {
         fontSize: stop.name.length > 18 ? "11px" : "13px",
         color: "#f4d35e",
@@ -382,7 +381,7 @@ export class GameScene extends Phaser.Scene {
       padding: { x: 6, y: 2 }
     }).setOrigin(0.5, 0.5).setDepth(hudDepth + 2);
 
-    this.nextLabel = this.add.text(WIDTH - 372, topY + 8, "NASTEPNY", { fontSize: "8px", color: "#8ea0a8", fontStyle: "700" }).setDepth(hudDepth + 1);
+    this.nextLabel = this.add.text(WIDTH - 372, topY + 8, "NASTĘPNY", { fontSize: "8px", color: "#8ea0a8", fontStyle: "700" }).setDepth(hudDepth + 1);
     this.nextText = this.add.text(WIDTH - 28, topY + 20, "", {
       fontSize: "15px",
       color: "#f4efe4",
@@ -470,7 +469,7 @@ export class GameScene extends Phaser.Scene {
       .setDepth(96);
     this.lineBadge = this.add.rectangle(this.progressX - 4, routeY + 2, 34, 18, 0x33b54b, 0.95).setOrigin(0.5).setDepth(98);
     this.lineBadgeText = this.add.text(this.progressX - 4, routeY - 7, "8", { fontSize: "17px", color: "#10131a", fontStyle: "700" }).setOrigin(0.5, 0).setDepth(99);
-    this.routeLabel = this.add.text(this.progressX + 22, routeY - 5, "Zarzew -> Teofilow", { fontSize: "10px", color: "#d9d3c4", fontStyle: "700" }).setDepth(98);
+    this.routeLabel = this.add.text(this.progressX + 22, routeY - 5, "Zarzew → Teofilów", { fontSize: "10px", color: "#d9d3c4", fontStyle: "700" }).setDepth(98);
     this.progressBg = this.add.rectangle(this.progressX, routeY + 21, this.progressWidth, 8, 0x111319, 0.95).setOrigin(0, 0.5).setDepth(97);
     this.progressFillGlow = this.add.rectangle(this.progressX, routeY + 21, 1, 12, 0xffb22e, 0.18).setOrigin(0, 0.5).setDepth(98);
     this.progressFill = this.add.rectangle(this.progressX, routeY + 21, 1, 6, 0xffb22e).setOrigin(0, 0.5).setDepth(99);
@@ -541,7 +540,7 @@ export class GameScene extends Phaser.Scene {
     makeButton(116, 590, 150, 72, "HAMUJ", 0xffb22e, () => { this.touchState.brake = true; }, () => { this.touchState.brake = false; });
     this.makeTouchThrottleSlider(WIDTH - 116, 512);
     makeButton(WIDTH / 2, 620, 154, 64, "DRZWI\nDZWONEK", 0xf4d35e, () => this.useActionButton());
-    makeButton(WIDTH - 274, 672, 104, 54, "Q\nSKRET", 0x8fb7e8, () => this.setSwitchChoice("left"));
+    makeButton(WIDTH - 274, 672, 104, 54, "Q\nSKRĘT", 0x8fb7e8, () => this.setSwitchChoice("left"));
     makeButton(WIDTH - 150, 672, 104, 54, "E\nPROSTO", 0x8fb7e8, () => this.setSwitchChoice("straight"));
     makeButton(WIDTH - 54, 112, 72, 44, "PAUZA", 0xf4efe4, () => this.togglePause());
   }
@@ -807,7 +806,7 @@ export class GameScene extends Phaser.Scene {
 
   setSwitchChoice(choice) {
     this.switchChoice = choice;
-    this.showMessage(choice === "left" ? "Zwrotnica ustawiona: SKRET" : "Zwrotnica ustawiona: PROSTO", 650, "#f4d35e");
+    this.showMessage(choice === "left" ? "Zwrotnica ustawiona: SKRĘT" : "Zwrotnica ustawiona: PROSTO", 650, "#f4d35e");
   }
 
   useActionButton() {
@@ -823,22 +822,22 @@ export class GameScene extends Phaser.Scene {
 
   updateTutorial() {
     if (this.modeKey === "training") {
-      this.showTutorial("training", "Trening: spokojnie sprawdz nastawnik, hamowanie i drzwi. Wynik ma znaczenie, ale kurs nie konczy sie od razu po bledzie.", 5000);
+      this.showTutorial("training", "Trening: spokojnie sprawdź nastawnik, hamowanie i drzwi. Wynik ma znaczenie, ale kurs nie kończy się od razu po błędzie.", 5000);
     } else {
       const mobile = this.touchLayer?.visible;
       this.showTutorial("start", mobile
-        ? "Sterowanie dotykowe: prawy suwak to nastawnik, lewy przycisk hamuje, srodek otwiera drzwi albo dzwoni."
-        : "A/D albo strzalki steruja nastawnikiem. SPACJA otwiera drzwi na przystanku albo uruchamia dzwonek.", 5200);
+        ? "Sterowanie dotykowe: prawy suwak to nastawnik, lewy przycisk hamuje, środek otwiera drzwi albo uruchamia dzwonek."
+        : "A/D albo strzałki sterują nastawnikiem. SPACJA otwiera drzwi na przystanku albo uruchamia dzwonek.", 5200);
     }
     const nextStop = this.activeStop();
     if (nextStop && nextStop.distance - this.distance < 760 && nextStop.distance - this.distance > 420) {
-      this.showTutorial("first-stop", "Przystanek przed Toba: zejdź z predkoscia prawie do zera, zatrzymaj sie w zoltej strefie i otworz drzwi.", 4300);
+      this.showTutorial("first-stop", "Przystanek przed Tobą: zejdź z prędkością prawie do zera, zatrzymaj się w żółtej strefie i otwórz drzwi.", 4300);
     }
     const car = this.events.find((event) => event.type === "car" && !event.cleared && event.distance - this.distance < 920 && event.distance - this.distance > 520);
-    if (car) this.showTutorial("first-car", "Auto blokuje tor: zwolnij, a gdy jest blisko, uzyj dzwonka. Auto powinno zjechac z torowiska.", 4300);
+    if (car) this.showTutorial("first-car", "Auto blokuje tor: zwolnij, a gdy jest blisko, użyj dzwonka. Auto powinno zjechać z torowiska.", 4300);
     const sw = this.nextRelevantSwitch();
     if (sw && sw.distance - this.distance < 1200 && sw.distance - this.distance > 760) {
-      this.showTutorial("first-switch", "Zwrotnica: ustaw kierunek zanim do niej dojedziesz. Q = skret, E = prosto; na telefonie uzyj przyciskow Q/E.", 4500);
+      this.showTutorial("first-switch", "Zwrotnica: ustaw kierunek, zanim do niej dojedziesz. Q = skręt, E = prosto; na telefonie użyj przycisków Q/E.", 4500);
     }
     if (this.time.now > this.tutorialUntil) this.tutorialLayer.setVisible(false);
   }
@@ -924,7 +923,7 @@ export class GameScene extends Phaser.Scene {
 
     const discomfort = Math.max(0, 72 - this.smoothness) * 0.012;
     const steadyRideBonus = this.smoothness > 88 && this.speed > 12 ? 0.035 : 0;
-    this.adjustSatisfaction((steadyRideBonus - 0.045 - discomfort) * dt, discomfort > 0.08 ? "pasazerowie czuja szarpanie" : "");
+    this.adjustSatisfaction((steadyRideBonus - 0.045 - discomfort) * dt, discomfort > 0.08 ? "pasażerowie czują szarpanie" : "");
   }
 
   addRidePenalty(amount, reason = "") {
@@ -951,7 +950,7 @@ export class GameScene extends Phaser.Scene {
 
     const delta = stop.distance - this.distance;
     if (delta < 380 && delta > -160 && !stop.served) {
-      this.showMessage(`${stop.name}: zatrzymaj w strefie i nacisnij SPACJA`, 260, "#f4d35e");
+      this.showMessage(`${stop.name}: zatrzymaj się w strefie i naciśnij SPACJĘ`, 260, "#f4d35e");
     }
 
     if (delta > 0 && delta < 720 && !stop.served) {
@@ -970,8 +969,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (!stop.served && this.distance > stop.distance + 210) {
-      this.adjustSatisfaction(-16, "pominiety przystanek");
-      this.addRidePenalty(7, "pominiety przystanek");
+      this.adjustSatisfaction(-16, "pominięty przystanek");
+      this.addRidePenalty(7, "pominięty przystanek");
       this.score -= 160;
       this.combo = 1;
       this.stopStreak = 0;
@@ -980,7 +979,7 @@ export class GameScene extends Phaser.Scene {
       stop.served = true;
       this.currentStopIndex += 1;
       this.playCue("bad");
-      this.showMessage(`Pominieto przystanek: ${stop.name}`, 1800, "#ff5c8a");
+      this.showMessage(`Pominięto przystanek: ${stop.name}`, 1800, "#ff5c8a");
       this.spawnEmotionBubble("!!", "#ff5c8a");
     }
   }
@@ -1023,7 +1022,7 @@ export class GameScene extends Phaser.Scene {
     stop.card.setVisible(false);
     stop.label.setVisible(false);
     stop.zone.setVisible(false);
-    const precisionLabel = rating === "S" ? "perfekcyjny stop" : rating === "A" ? "dobry stop" : rating === "B" ? "ciasny dojazd" : "daleko od peronu";
+    const precisionLabel = rating === "S" ? "idealny postój" : rating === "A" ? "dobry postój" : rating === "B" ? "ciasny dojazd" : "daleko od peronu";
     this.playCue(rating === "S" || rating === "A" ? "good" : "neutral");
     this.showMessage(`${stop.name}: ${precisionLabel}, ${this.scheduleLabel(scheduleDelta)}, combo x${this.combo.toFixed(2)}`, 1900, "#50d2c2");
     this.scorePopup(`+${scored}`, this.screenX(stop.distance), 430, rating === "S" ? "#50d2c2" : "#f4d35e");
@@ -1032,7 +1031,7 @@ export class GameScene extends Phaser.Scene {
   toggleDoors(stop) {
     if (this.doorsOpen) return;
     if (Math.abs(this.distance - stop.distance) > 138) {
-      this.showMessage("Staniesz blizej krawedzi przystanku", 1000, "#ffb22e");
+      this.showMessage("Stań bliżej krawędzi przystanku", 1000, "#ffb22e");
       return;
     }
     this.doorsOpen = true;
@@ -1040,8 +1039,8 @@ export class GameScene extends Phaser.Scene {
     this.speed = 0;
     this.throttle = 0;
     this.score += 40;
-    this.addFeedback("dobry postoj: wymiana pasazerow", "#50d2c2");
-    this.showMessage("DRZWI OTWARTE - wymiana pasazerow", 900, "#50d2c2");
+    this.addFeedback("dobry postój: wymiana pasażerów", "#50d2c2");
+    this.showMessage("DRZWI OTWARTE - wymiana pasażerów", 900, "#50d2c2");
     this.playCue("doors");
     this.animateDoors(true);
     this.animatePassengerExchange(stop);
@@ -1092,8 +1091,8 @@ export class GameScene extends Phaser.Scene {
   scheduleLabel(delta) {
     const abs = Math.abs(delta);
     if (abs <= 18) return "punktualnie";
-    if (delta < 0) return `za wczesnie ${Math.round(abs)}s`;
-    return `spoznienie ${Math.round(abs)}s`;
+    if (delta < 0) return `za wcześnie ${Math.round(abs)}s`;
+    return `spóźnienie ${Math.round(abs)}s`;
   }
 
   formatScheduleDelta(delta) {
@@ -1112,8 +1111,8 @@ export class GameScene extends Phaser.Scene {
     }
     const penalty = Phaser.Math.Clamp((abs - 18) * 0.08, 1, 9);
     this.punctuality = Phaser.Math.Clamp(this.punctuality - penalty, 0, 100);
-    this.adjustSatisfaction(-penalty * 0.42, delta < 0 ? "odjazd za wczesnie" : "spoznienie wzgledem rozkladu");
-    this.addRidePenalty(penalty * 0.35, "rozklad poza tolerancja");
+    this.adjustSatisfaction(-penalty * 0.42, delta < 0 ? "odjazd za wcześnie" : "spóźnienie względem rozkładu");
+    this.addRidePenalty(penalty * 0.35, "rozkład poza tolerancją");
     if (delta < 0) this.stats.earlyStops += 1;
     else this.stats.lateStops += 1;
     return -Math.round(penalty * 18);
@@ -1133,7 +1132,7 @@ export class GameScene extends Phaser.Scene {
           this.showMessage("Auto blokuje tor - hamuj albo DRYN", 240, "#ffb22e");
         }
         if (Math.abs(noseRelative) <= event.collisionHalfWidth && this.speed > 5) {
-          this.gameOver("Kolizja ze zle zaparkowanym autem");
+          this.gameOver("Kolizja ze źle zaparkowanym autem");
         }
       }
 
@@ -1143,10 +1142,10 @@ export class GameScene extends Phaser.Scene {
         const hard = this.speed > this.vehicle.maxSpeed * 0.46;
         this.speed *= hard ? 0.76 : 0.9;
         this.adjustSatisfaction(hard ? -11 : -3.5, hard ? "dziura przejechana za szybko" : "dziura w torowisku");
-        this.addRidePenalty(hard ? 26 : 8, hard ? "mocne uderzenie na dziurze" : "nierowny przejazd");
+        this.addRidePenalty(hard ? 26 : 8, hard ? "mocne uderzenie na dziurze" : "nierówny przejazd");
         this.shakeCamera(hard ? 320 : 140, hard ? 0.012 : 0.005);
         this.playCue(hard ? "bad" : "neutral");
-        this.showMessage(hard ? "DZIURA! Pasazerowie polecieli z siedzen" : "Dziura przejechana ostroznie", 1200, hard ? "#ff5c8a" : "#f4d35e");
+        this.showMessage(hard ? "DZIURA! Pasażerowie polecieli z siedzeń" : "Dziura przejechana ostrożnie", 1200, hard ? "#ff5c8a" : "#f4d35e");
         if (hard) this.spawnEmotionBubble("!!", "#ff5c8a");
         else this.spawnEmotionBubble("!", "#ffb22e");
       }
@@ -1158,7 +1157,7 @@ export class GameScene extends Phaser.Scene {
         this.nextConditionAt = Math.max(this.nextConditionAt, this.distance + 520);
         const roughFast = this.speed > this.vehicle.maxSpeed * 0.38;
         this.adjustSatisfaction(roughFast ? -6 : -1.5, roughFast ? "za szybko na odcinku remontowym" : "krzywe torowisko");
-        this.addRidePenalty(roughFast ? 18 : 5, "nierowny odcinek torowiska");
+        this.addRidePenalty(roughFast ? 18 : 5, "nierówny odcinek torowiska");
         this.playCue(roughFast ? "bad" : "neutral");
         this.showMessage("Odcinek remontowy: trzymaj spokojny nastawnik", 1500, "#ffb22e");
         if (roughFast) this.spawnEmotionBubble("?!", "#ffb22e");
@@ -1219,7 +1218,7 @@ export class GameScene extends Phaser.Scene {
       }
     });
     this.adjustSatisfaction(cleared ? -0.2 : -0.8, cleared ? "" : "niepotrzebny dzwonek");
-    this.showMessage(cleared ? "Drryn! Auto zjezdza z toru" : "Drryn!", 850, cleared ? "#50d2c2" : "#f4d35e");
+    this.showMessage(cleared ? "Drryn! Auto zjeżdża z toru" : "Drryn!", 850, cleared ? "#50d2c2" : "#f4d35e");
   }
 
   updateSwitches() {
@@ -1230,11 +1229,11 @@ export class GameScene extends Phaser.Scene {
       sw.lamp.setFillStyle(selected ? 0x50d2c2 : 0xffb22e, near ? 0.95 : 0.55);
       sw.lever.setRotation(this.switchChoice === "left" ? -0.28 : 0.28);
       sw.branch.setFillStyle(selected ? 0x50d2c2 : 0xffb22e, near ? 0.86 : 0.42);
-      sw.label.setText(near ? `${sw.name}\n${this.switchChoice === "left" ? "SKRET" : "PROSTO"} / cel: ${sw.correct === "left" ? "SKRET" : "PROSTO"}` : "");
+      sw.label.setText(near ? `${sw.name}\n${this.switchChoice === "left" ? "SKRĘT" : "PROSTO"} / cel: ${sw.correct === "left" ? "SKRĘT" : "PROSTO"}` : "");
       sw.label.setVisible(near);
       if (!sw.resolved && relative < 760 && relative > 160 && !sw.warned) {
         sw.warned = true;
-        this.showMessage(`${sw.hint} | Q skret, E prosto`, 2400, "#ffb22e");
+        this.showMessage(`${sw.hint} | Q skręt, E prosto`, 2400, "#ffb22e");
         this.playCue("neutral");
       }
       // Switch speed penalty — max ~25 km/h in switch zone (200m before)
@@ -1262,14 +1261,14 @@ export class GameScene extends Phaser.Scene {
           this.stats.switchWrong += 1;
           this.score -= 520;
           this.timeLeft -= 12;
-          this.adjustSatisfaction(-10, "zle ustawiona zwrotnica");
-          this.addRidePenalty(18, "blad zwrotnicy");
+          this.adjustSatisfaction(-10, "źle ustawiona zwrotnica");
+          this.addRidePenalty(18, "błąd zwrotnicy");
           this.speed *= 0.54;
           this.combo = 1;
           this.switchPenaltyUntil = this.time.now + 1800;
           this.shakeCamera(260, 0.008);
           this.playCue("bad");
-          this.showMessage(`Zla zwrotnica: ${sw.wrongLabel}. Dyspozytor zawraca kurs`, 2100, "#ff5c8a");
+          this.showMessage(`Zła zwrotnica: ${sw.wrongLabel}. Dyspozytor zawraca kurs`, 2100, "#ff5c8a");
         }
       }
     });
@@ -1298,7 +1297,7 @@ export class GameScene extends Phaser.Scene {
         const hard = this.speed > 42;
         this.score -= hard ? 140 : 65;
         this.adjustSatisfaction(hard ? -7 : -3.5, "przejazd na czerwonym");
-        this.addRidePenalty(hard ? 8 : 3, "czerwone swiatlo");
+        this.addRidePenalty(hard ? 8 : 3, "czerwone światło");
         this.signalPenaltyUntil = this.time.now + 1200;
         this.playCue(hard ? "bad" : "neutral");
         this.showMessage(hard ? "Przelot na czerwonym!" : "Czerwone: nawet wolny przejazd kosztuje", 1200, hard ? "#ff5c8a" : "#ffb22e");
@@ -1792,7 +1791,7 @@ export class GameScene extends Phaser.Scene {
       fontStyle: "700",
       color: "#8ea0a8"
     }).setDepth(101);
-    this.speedometerLabel.setText("PREDKOSC");
+    this.speedometerLabel.setText("PRĘDKOŚĆ");
     this.speedometerText = this.add.text(180, panelY - 22, "0 km/h", {
       fontSize: "16px",
       fontStyle: "700",
@@ -2041,11 +2040,11 @@ export class GameScene extends Phaser.Scene {
       const nextSwitch = this.nextRelevantSwitch();
       let text = "";
       if (nextSwitch && nextSwitch.distance - this.distance < 1200) {
-        text = `Dyspozytor: zwrotnica za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}, ${nextSwitch.correct === "left" ? "szykuj skret" : "trzymaj prosto"}.`;
+        text = `Dyspozytor: zwrotnica za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}, ${nextSwitch.correct === "left" ? "szykuj skręt" : "trzymaj prosto"}.`;
       } else if (nextSignal && nextSignal.state === "red" && nextSignal.distance - this.distance < 900) {
-        text = "Dyspozytor: czerwone przed Toba, nie oddawaj punktow na sygnale.";
+        text = "Dyspozytor: czerwone przed Tobą, nie oddawaj punktów na sygnale.";
       } else if (next && next.distance - this.distance < 900) {
-        text = `Dyspozytor: nastepny ${next.name}, zacznij schodzic z predkosci.`;
+        text = `Dyspozytor: następny ${next.name}, zacznij schodzić z prędkości.`;
       } else {
         const lines = (this.districtProfile || DISTRICT_PROFILES.zarzew).dispatch;
         text = lines[Phaser.Math.Between(0, lines.length - 1)];
@@ -2256,17 +2255,17 @@ export class GameScene extends Phaser.Scene {
       { type: "landmark", key: "landmark-witcher-mural", distance: Math.round(7.3 * ROUTE_SCALE), y: 536, scale: 0.31, depth: 10 },
       { type: "landmark", key: "landmark-unicorn-statue", distance: Math.round(7.78 * ROUTE_SCALE), y: 530, scale: 0.36, depth: 13 },
       { type: "sign", distance: Math.round(0.32 * ROUTE_SCALE), y: 504, label: "ZARZEW\nSPOKOJNIE", depth: 13 },
-      { type: "sign", distance: Math.round(2.22 * ROUTE_SCALE), y: 500, label: "ROKICINSKA\nTRZYMAJ TOR", depth: 13 },
-      { type: "sign", distance: Math.round(3.62 * ROUTE_SCALE), y: 502, label: "WIDZEW\nCALA NAPRZOD", depth: 14 },
+      { type: "sign", distance: Math.round(2.22 * ROUTE_SCALE), y: 500, label: "ROKICIŃSKA\nTRZYMAJ TOR", depth: 13 },
+      { type: "sign", distance: Math.round(3.62 * ROUTE_SCALE), y: 502, label: "WIDZEW\nCAŁA NAPRZÓD", depth: 14 },
       { type: "sign", distance: Math.round(4.72 * ROUTE_SCALE), y: 506, label: "WI-MA\nFABRYKA RYTMU", depth: 13 },
-      { type: "sign", distance: Math.round(6.72 * ROUTE_SCALE), y: 498, label: "HOLLY\nLODZ", depth: 13 },
-      { type: "sign", distance: Math.round(8.16 * ROUTE_SCALE), y: 500, label: "STAJNIA\nJEDNOROZCOW", depth: 13 },
+      { type: "sign", distance: Math.round(6.72 * ROUTE_SCALE), y: 498, label: "HOLLY\nŁÓDŹ", depth: 13 },
+      { type: "sign", distance: Math.round(8.16 * ROUTE_SCALE), y: 500, label: "STAJNIA\nJEDNOROŻCÓW", depth: 13 },
       { type: "sign", distance: Math.round(9.52 * ROUTE_SCALE), y: 502, label: "KALISKA\nNIE PRZESTRZEL", depth: 13 },
-      { type: "sign", distance: Math.round(14.85 * ROUTE_SCALE), y: 506, label: "TEOFILOW\nJUZ BLISKO", depth: 13 },
+      { type: "sign", distance: Math.round(14.85 * ROUTE_SCALE), y: 506, label: "TEOFILÓW\nJUŻ BLISKO", depth: 13 },
       { type: "gate", offset: 2500, y: 492, label: "BRAMA" },
       { type: "generated", key: "lodz-detail-cafe", offset: 3380, y: 502, scale: 0.15 },
       { type: "generated", key: "lodz-detail-mural", offset: 4260, y: 496, scale: 0.16 },
-      { type: "generated", key: "lodz-detail-works", offset: 5200, y: 642, scale: 0.14 },
+      { type: "works", offset: 5200, y: 566, depth: 17 },
       { type: "generated", key: "lodz-detail-lcn", offset: 6140, y: 504, scale: 0.15 },
       { type: "generated", key: "lodz-detail-cafe", offset: 7200, y: 502, scale: 0.14 },
       { type: "generated", key: "lodz-detail-lcn", offset: 8280, y: 508, scale: 0.13 },
@@ -2293,9 +2292,9 @@ export class GameScene extends Phaser.Scene {
         group.add(this.add.text(0, def.y - 64, def.label, { fontSize: "15px", color: "#f4d35e", fontStyle: "700", align: "center" }).setOrigin(0.5));
         group.add(this.add.rectangle(-34, def.y - 30, 44, 12, 0x50d2c2, 0.82).setRotation(-0.22));
       } else if (def.type === "works") {
-        group.add(this.add.image(0, def.y, "roadworks-truck-side").setScale(0.66).setOrigin(0.5, 1));
-        group.add(this.add.rectangle(72, def.y - 18, 16, 28, 0xffb22e, 0.94).setRotation(0.15));
-        group.add(this.add.rectangle(102, def.y - 18, 16, 28, 0xffb22e, 0.94).setRotation(-0.12));
+        group.add(this.add.image(0, def.y, "roadworks-truck-side").setScale(0.52).setOrigin(0.5, 1));
+        group.add(this.add.image(108, def.y, "prop-road-barrier").setScale(0.2).setOrigin(0.5, 1));
+        group.add(this.add.image(-102, def.y, "prop-road-cone").setScale(0.14).setOrigin(0.5, 1));
       } else {
         const fill = def.type === "lcn" ? 0x1b7c53 : 0x1f2630;
         group.add(this.add.rectangle(0, def.y - 52, 132, 56, fill, 0.9).setStrokeStyle(3, 0x111319, 1));
@@ -2490,28 +2489,29 @@ export class GameScene extends Phaser.Scene {
     this.clockText.setText(this.formatTime(this.timeLeft));
     this.clockText.setColor(this.timeLeft < 30 ? "#ff5c8a" : "#ffb22e");
     this.scoreText.setText(`${this.currentScore()}`);
-    this.nextText.setText(next ? `${this.shortLabel(next.name, 20)}  ${this.formatRouteDistance(remainingToStop)}` : "FINISH");
-    this.hudPassengerText.setText(`Pax ${Math.round(this.passengers)}\n${Math.round(this.satisfaction)}% OK`);
+    this.nextText.setText(next ? `${this.shortLabel(next.name, 20)}  ${this.formatRouteDistance(remainingToStop)}` : "KONIEC");
+    this.hudPassengerText.setText(`Pas. ${Math.round(this.passengers)}\n${Math.round(this.satisfaction)}% OK`);
     this.hudPassengerText.setColor(this.satisfaction < 55 ? "#ff5c8a" : this.satisfaction < 75 ? "#ffb22e" : "#f4efe4");
     this.hudModePill.setText(this.mode.label.toUpperCase());
     this.fitText(this.hudModePill, 108, 8, 6);
-    const signalStatus = nextSignal ? `SIG ${nextSignal.state.toUpperCase()}` : "SIG OK";
+    const signalLabel = nextSignal ? ({ red: "CZERW", yellow: "ŻÓŁ", green: "ZIEL" }[nextSignal.state] || nextSignal.state.toUpperCase()) : "OK";
+    const signalStatus = `SYG ${signalLabel}`;
     this.hudScheduleText.setText(`${this.formatScheduleDelta(scheduleDelta)} | ${Math.round(this.punctuality)}% | ${signalStatus}`);
     this.hudScheduleText.setColor(Math.abs(scheduleDelta) <= 18 ? "#50d2c2" : scheduleDelta > 0 ? "#ffb22e" : "#8fb7e8");
     this.fitText(this.nextText, 320, 15, 10);
     this.fitText(this.hudScheduleText, 340, 9, 7);
 
     // Hidden but updated for audit compliance
-    this.speedText.setText(`Pred ${Math.round(this.toDisplaySpeed(this.speed))}/${Math.round(this.toDisplaySpeed(safeSpeed))} km/h | Drzwi ${this.doorsOpen ? "OPEN" : "CLOSED"}`);
+    this.speedText.setText(`Pręd. ${Math.round(this.toDisplaySpeed(this.speed))}/${Math.round(this.toDisplaySpeed(safeSpeed))} km/h | Drzwi ${this.doorsOpen ? "OTW." : "ZAM."}`);
     this.trackText.setText(`Tor ${Math.round(this.trackCondition * 100)}%`);
-    this.passengerText.setText(`Pax ${Math.round(this.passengers)} | Dow ${this.delivered}`);
-    this.signalText.setText(nextSignal ? `Signal ${nextSignal.state.toUpperCase()} | ${this.formatRouteDistance(nextSignal.distance - this.distance)}` : "");
-    this.scheduleText.setText(`Rozklad ${this.formatScheduleDelta(scheduleDelta)} | Punkt. ${Math.round(this.punctuality)}%`);
+    this.passengerText.setText(`Pas. ${Math.round(this.passengers)} | Dow. ${this.delivered}`);
+    this.signalText.setText(nextSignal ? `Sygnał ${signalLabel} | ${this.formatRouteDistance(nextSignal.distance - this.distance)}` : "");
+    this.scheduleText.setText(`Rozkład ${this.formatScheduleDelta(scheduleDelta)} | Punkt. ${Math.round(this.punctuality)}%`);
     this.modeBadgeText.setText(this.mode.label);
-    const switchText = `Zwrotnica ${this.switchChoice === "straight" ? "PROSTO(E)" : "SKRET(Q)"}`;
-    this.brakeText.setText(recommended === null ? `${switchText} | Rating ${this.stopRating}` : `Hamuj do ${Math.round(this.toDisplaySpeed(recommended))} km/h | ${switchText}`);
+    const switchText = `Zwrotnica ${this.switchChoice === "straight" ? "PROSTO(E)" : "SKRĘT(Q)"}`;
+    this.brakeText.setText(recommended === null ? `${switchText} | Ocena ${this.stopRating}` : `Hamuj do ${Math.round(this.toDisplaySpeed(recommended))} km/h | ${switchText}`);
     const showSwitch = Boolean(nextSwitch && nextSwitch.distance - this.distance < 1100);
-    this.nextSwitchText.setText(showSwitch ? `Za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}: ${nextSwitch.correct === "left" ? "Q SKRET" : "E PROSTO"}` : "");
+    this.nextSwitchText.setText(showSwitch ? `Za ${this.formatRouteDistance(nextSwitch.distance - this.distance)}: ${nextSwitch.correct === "left" ? "Q SKRĘT" : "E PROSTO"}` : "");
     const recentFeedback = this.feedbackReasons
       .filter((item) => this.time.now - item.time < 5200)
       .slice(0, 1);
@@ -2534,10 +2534,10 @@ export class GameScene extends Phaser.Scene {
     this.progressHead.setFillStyle(this.speed > safeSpeed ? 0xff5c8a : 0xf4efe4, 0.95);
 
     // Sunset indicator in route label
-    this.routeLabel.setText("Zarzew -> Teofilow");
+    this.routeLabel.setText("Zarzew → Teofilów");
     if (this.modeKey === "last" && this.sunsetProgress > 0.1) {
-      const sunsetLabel = this.sunsetProgress > 0.7 ? "Noc" : this.sunsetProgress > 0.3 ? "Zmierzch" : "Zachod";
-      this.routeLabel.setText(`Zarzew -> Teofilow | ${sunsetLabel}`);
+      const sunsetLabel = this.sunsetProgress > 0.7 ? "Noc" : this.sunsetProgress > 0.3 ? "Zmierzch" : "Zachód";
+      this.routeLabel.setText(`Zarzew → Teofilów | ${sunsetLabel}`);
     }
 
     if (this.timeLeft < 25 && !this.warningText.text.includes("CZAS")) {
@@ -2556,7 +2556,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   checkEnd() {
-    if (this.timeLeft <= 0) this.gameOver("Czas kursu sie skonczyl");
+    if (this.timeLeft <= 0) this.gameOver("Czas kursu się skończył");
     if (this.currentStopIndex >= STOPS.length || this.distance >= ROUTE_END_DISTANCE + 220) {
       const missed = this.stats.missedStops > 0 || this.stats.servedStops < STOPS.length;
       const bonus = Math.round(
@@ -2570,7 +2570,7 @@ export class GameScene extends Phaser.Scene {
         this.finishBonusApplied = true;
       }
       this.playCue("finish");
-      this.endScreen(missed ? "Teofilow z brakami" : "Krancowka Teofilow", this.buildEndReport(Math.max(0, bonus), false));
+      this.endScreen(missed ? "Teofilów z brakami" : "Krańcówka Teofilów", this.buildEndReport(Math.max(0, bonus), false));
     }
   }
 
@@ -2907,9 +2907,9 @@ export class GameScene extends Phaser.Scene {
   // === MILESTONE BONUSES ===
   updateMilestones() {
     const milestones = [
-      { id: "piotrkowska-half", stopId: "piotrkowska", label: "POLOWA TRASY! Piotrkowska Centrum", bonus: 200, color: "#f4d35e" },
-      { id: "legionow-3q", stopId: "legionow", label: "3/4 TRASY! Legionow - juz niedaleko", bonus: 150, color: "#50d2c2" },
-      { id: "teofilow-final", stopId: "szczecinska", label: "OSTATNI ODCINEK! Dowiez ich do domu", bonus: 100, color: "#8fb7e8" }
+      { id: "piotrkowska-half", stopId: "piotrkowska", label: "POŁOWA TRASY! Piotrkowska Centrum", bonus: 200, color: "#f4d35e" },
+      { id: "legionow-3q", stopId: "legionow", label: "3/4 TRASY! Legionów - już niedaleko", bonus: 150, color: "#50d2c2" },
+      { id: "teofilow-final", stopId: "szczecinska", label: "OSTATNI ODCINEK! Dowieź ich do domu", bonus: 100, color: "#8fb7e8" }
     ];
     milestones.forEach((milestone) => {
       if (this.milestonesTriggered.has(milestone.id)) return;
@@ -3231,7 +3231,7 @@ export class GameScene extends Phaser.Scene {
     if (nextStop && !nextStop.served && !this.ambientAnnouncedStops.has(nextStop.id) && nextStop.distance - this.distance < 600 && nextStop.distance - this.distance > -140) {
       this.ambientAnnouncedStops.add(nextStop.id);
       this.playStationChime();
-      this.showRouteMoment(`Nastepny przystanek: ${nextStop.name}`, 2600, "#8fb7e8");
+      this.showRouteMoment(`Następny przystanek: ${nextStop.name}`, 2600, "#8fb7e8");
     }
 
     if (this.speed > this.vehicle.maxSpeed * 0.3 && this.time.now > this.nextAmbientClatterAt) {
@@ -3394,7 +3394,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5));
 
     if (title !== "Kurs przerwany") {
-      layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 190, "Dyspozytor: dobra robota, sklad na petli.", {
+      layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 190, "Dyspozytor: dobra robota, skład na pętli.", {
         fontSize: "13px",
         fontStyle: "700",
         color: "#50d2c2",
@@ -3472,34 +3472,17 @@ export class GameScene extends Phaser.Scene {
         fontSize: "10px", fontStyle: "700", color: "#50d2c2", wordWrap: { width: 560, useAdvancedWrap: true }
       }));
     }
-    const dailyBest = this.challenge ? this.profile.stats.dailyBest[this.challenge.date] || finalScore : null;
-    const initialStatus = completed
-      ? (this.challenge ? `Wysyłanie wyniku • rekord dnia ${dailyBest}` : "Wysyłanie wyniku do rankingu...")
-      : "Nieukończony kurs nie trafia do rankingu";
-    const submissionText = this.add.text(WIDTH / 2, HEIGHT / 2 + 238, initialStatus, {
-      fontSize: "11px", fontStyle: "700", color: completed ? "#8fb7e8" : "#8ea0a8"
-    }).setOrigin(0.5);
-    layer.add(submissionText);
-    if (completed) {
-      submitRun(this.runSummary).then((result) => {
-        if (!submissionText.active) return;
-        if (result.ok) {
-          const rank = result.daily?.rank || result.mode?.rank;
-          submissionText.setText(rank ? `Wynik zapisany • pozycja ${rank}` : "Wynik zapisany w rankingu").setColor("#50d2c2");
-        } else if (result.unconfigured) {
-          submissionText.setText("Ranking online nie jest jeszcze skonfigurowany").setColor("#8ea0a8");
-        } else if (result.offline) {
-          submissionText.setText("Offline: wynik czeka w kolejce").setColor("#ffb22e");
-        } else {
-          submissionText.setText("Nie udało się wysłać wyniku • zapisano do ponowienia").setColor("#ffb22e");
-        }
-      });
+    if (this.challenge) {
+      const dailyBest = this.profile.stats.dailyBest[this.challenge.date] || finalScore;
+      layer.add(this.add.text(WIDTH / 2, HEIGHT / 2 + 238, `Rekord dnia: ${dailyBest}`, {
+        fontSize: "11px", fontStyle: "700", color: "#8fb7e8"
+      }).setOrigin(0.5));
     }
   }
 
   addResultBars(layer, x, y) {
     const values = [
-      ["Plynnosc", this.smoothness, 0x50d2c2],
+      ["Płynność", this.smoothness, 0x50d2c2],
       ["Zadow.", this.satisfaction, 0xf4d35e],
       ["Przyst.", (this.stats.servedStops / STOPS.length) * 100, 0x8fb7e8],
       ["Punkt.", this.punctuality, 0xffb22e],
@@ -3537,7 +3520,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: "9px",
         color: "#d9d3c4"
       }));
-      layer.add(this.add.text(x + 8, yy + 34, `Plyn ${run.smoothness}%  Zad ${run.satisfaction}%`, {
+      layer.add(this.add.text(x + 8, yy + 34, `Płyn. ${run.smoothness}%  Zad. ${run.satisfaction}%`, {
         fontSize: "9px",
         color: "#8ea0a8"
       }));
@@ -3551,11 +3534,11 @@ export class GameScene extends Phaser.Scene {
     const missionLines = missions.map((mission) => `${mission.ok ? "OK" : "--"} ${mission.label}`);
     return [
       `Ocena kursu: ${grade} | Cele: ${passed}/${missions.length}`,
-      interrupted ? `Powod: ${reason}` : `Bonus koncowy: ${bonus}`,
-      `Przystanki: ${this.stats.servedStops}/${STOPS.length} | Pominiete: ${this.stats.missedStops} | S-stop: ${this.stats.perfectStops}`,
-      `Pax dowiezieni: ${this.delivered} | W skladzie: ${Math.round(this.passengers)} | Combo max x${this.bestCombo.toFixed(2)}`,
-      `Plynnosc ${Math.round(this.smoothness)}% | Zadowolenie ${Math.round(this.satisfaction)}% | Punktualnosc ${Math.round(this.punctuality)}%`,
-      `Rozklad: ${this.stats.onTimeStops} punkt., ${this.stats.earlyStops} wcz., ${this.stats.lateStops} opozn. | Czas ${this.formatTime(this.timeLeft)}`,
+      interrupted ? `Powód: ${reason}` : `Bonus końcowy: ${bonus}`,
+      `Przystanki: ${this.stats.servedStops}/${STOPS.length} | Pominięte: ${this.stats.missedStops} | Idealne: ${this.stats.perfectStops}`,
+      `Pasażerowie: ${this.delivered} | W pojeździe: ${Math.round(this.passengers)} | Combo max x${this.bestCombo.toFixed(2)}`,
+      `Płynność ${Math.round(this.smoothness)}% | Zadowolenie ${Math.round(this.satisfaction)}% | Punktualność ${Math.round(this.punctuality)}%`,
+      `Rozkład: ${this.stats.onTimeStops} punkt., ${this.stats.earlyStops} wcz., ${this.stats.lateStops} opóźn. | Czas ${this.formatTime(this.timeLeft)}`,
       `Incydenty: auta ${this.stats.carsCleared}, dziury ${this.stats.potholes}, zasilanie ${this.stats.powerLosses}, czerwone ${this.stats.redSignals}`,
       "",
       ...missionLines

@@ -4,7 +4,7 @@ export const CHALLENGE_VEHICLES = ["konstal", "pesa"];
 
 export function utcDateKey(value = new Date()) {
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) throw new TypeError("Nieprawidlowa data wyzwania");
+  if (Number.isNaN(date.getTime())) throw new TypeError("Nieprawidłowa data wyzwania");
   return date.toISOString().slice(0, 10);
 }
 

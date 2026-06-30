@@ -18,10 +18,10 @@ const assetGroups = {
   "assets/sprites": null,
   "assets/audio": ["konstal_ride_loop.ogg", "pesa_ride_loop.ogg"],
   "assets/sprites-ai": ["arrow-left.png", "arrow-right.png", "car.png", "car-green.png"],
-  "assets/branding": ["lcn-logo-menu.png", "landing-tram.webp", "lcn-billboard-generated.png", "lcn-billboard-1.png", "lcn-billboard-2.png", "lcn-billboard-3.png"],
+  "assets/branding": ["landing-tram.webp", "social-preview.jpg", "lcn-billboard-generated.png", "lcn-billboard-1.png", "lcn-billboard-2.png", "lcn-billboard-3.png"],
   "assets/generated": [
     "stajnia-jednorozcow-stop.png", "lodz-detail-lcn.png", "lodz-detail-mural.png", "lodz-detail-cafe.png",
-    "lodz-detail-works-alpha.png", "landmark-znicze.png", "landmark-drzewo.png", "landmark-smolarek-mural.png",
+    "landmark-znicze.png", "landmark-drzewo.png", "landmark-smolarek-mural.png",
     "landmark-witcher-mural.png", "widzew-fans-bg.png", "landmark-unicorn-statue.png"
   ]
 };
@@ -48,10 +48,10 @@ Object.entries(assetGroups).forEach(([directory, files]) => {
 });
 
 const shellBytes = totalBytes([
-  "landing.html", "landing.css", "game.html", "manifest.json", "runtime-config.js", "src",
+  "index.html", "landing.html", "landing.css", "game.html", "manifest.json", "runtime-config.js", "src",
   "assets/fonts", "assets/icons", "assets/ui", "assets/sprites/track.png", "assets/sprites/plac.png",
   "assets/trams/tram-konstal.png", "assets/trams/tram-pesa.png", "assets/backgrounds/bg-piotrkowska.png",
-  "assets/branding/lcn-logo-menu.png"
+  "assets/branding/landing-tram.webp"
 ]);
 const total = directoryBytes(output);
 const gameplay = total - shellBytes;

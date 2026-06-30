@@ -25,8 +25,8 @@ export function scheduleDeltaForStop({ stop, elapsedTime, scheduleDuration, rout
 export function scheduleLabel(delta) {
   const abs = Math.abs(delta);
   if (abs <= 18) return "punktualnie";
-  if (delta < 0) return `za wczesnie ${Math.round(abs)}s`;
-  return `spoznienie ${Math.round(abs)}s`;
+  if (delta < 0) return `za wcześnie ${Math.round(abs)}s`;
+  return `spóźnienie ${Math.round(abs)}s`;
 }
 
 export function classifyScheduleDelta(delta) {

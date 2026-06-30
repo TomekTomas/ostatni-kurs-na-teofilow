@@ -13,7 +13,9 @@ export class PreloadGameScene extends Phaser.Scene {
 
   preload() {
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x10131a).setOrigin(0);
-    this.add.image(WIDTH / 2, 110, "lcn-logo-menu").setScale(0.24);
+    this.add.rectangle(WIDTH / 2, 108, 118, 82, 0x033968, 1).setStrokeStyle(3, 0xffb22e, 1);
+    this.add.text(WIDTH / 2, 96, "TT", { fontSize: "32px", fontStyle: "700", color: "#ffffff" }).setOrigin(0.5);
+    this.add.text(WIDTH / 2, 129, "TOMASZ TOMAS", { fontSize: "9px", fontStyle: "700", color: "#ffb22e" }).setOrigin(0.5);
     this.add.text(WIDTH / 2, 232, "PRZYGOTOWANIE KURSU", {
       fontSize: "28px", fontStyle: "700", color: "#ffb22e"
     }).setOrigin(0.5);
