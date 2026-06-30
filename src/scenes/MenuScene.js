@@ -129,18 +129,43 @@ export class MenuScene extends Phaser.Scene {
   }
 
   startSelectedGame() {
+    this.requestImmersiveMode();
     this.showMissionPreview(() => {
       this.scene.start("PreloadGameScene", { vehicleKey: this.selected, modeKey: this.selectedMode });
     });
   }
 
   startDailyChallenge() {
+    this.requestImmersiveMode();
     const challenge = this.dailyChallenge;
     this.scene.start("PreloadGameScene", {
       vehicleKey: challenge.vehicle,
       modeKey: challenge.mode,
       challenge
     });
+  }
+
+  requestImmersiveMode() {
+    const hasTouch = this.sys.game.device.input.touch || navigator.maxTouchPoints > 0;
+    const isStandalone = window.matchMedia?.("(display-mode: fullscreen)")?.matches
+      || window.matchMedia?.("(display-mode: standalone)")?.matches;
+    if (!hasTouch || isStandalone || document.fullscreenElement || document.webkitFullscreenElement) return;
+
+    const root = document.documentElement;
+    const enterFullscreen = root.requestFullscreen
+      ? () => root.requestFullscreen({ navigationUI: "hide" })
+      : root.webkitRequestFullscreen
+        ? () => root.webkitRequestFullscreen()
+        : null;
+    if (!enterFullscreen) return;
+
+    Promise.resolve(enterFullscreen())
+      .then(() => {
+        const lockOrientation = window.screen.orientation?.lock;
+        if (typeof lockOrientation !== "function") return null;
+        return lockOrientation.call(window.screen.orientation, "landscape").catch(() => null);
+      })
+      .catch(() => {});
   }
 
   createMainTabs() {

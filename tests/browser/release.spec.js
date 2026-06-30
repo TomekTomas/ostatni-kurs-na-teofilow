@@ -143,6 +143,24 @@ test("gra startuje po obróceniu telefonu do poziomu", async ({ browser }) => {
   await context.close();
 });
 
+test("START prosi o pełny ekran na telefonie", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+  await page.goto("http://127.0.0.1:4173/game.html");
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
+  await page.evaluate(() => {
+    window.__fullscreenRequestCount = 0;
+    document.documentElement.requestFullscreen = () => {
+      window.__fullscreenRequestCount += 1;
+      return Promise.resolve();
+    };
+  });
+  await page.evaluate(() => window.__KURS8_GAME__.scene.getScene("MenuScene").startSelectedGame());
+  await page.waitForFunction(() => window.__fullscreenRequestCount === 1);
+  expect(await page.evaluate(() => window.__fullscreenRequestCount)).toBe(1);
+  await context.close();
+});
+
 async function clickCanvas(page, gameX, gameY) {
   const canvas = page.locator("canvas");
   const box = await canvas.boundingBox();
