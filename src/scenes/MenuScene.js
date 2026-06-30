@@ -145,27 +145,51 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  requestImmersiveMode() {
+  requestImmersiveMode(showRetry = true) {
     const hasTouch = this.sys.game.device.input.touch || navigator.maxTouchPoints > 0;
     const isStandalone = window.matchMedia?.("(display-mode: fullscreen)")?.matches
       || window.matchMedia?.("(display-mode: standalone)")?.matches;
-    if (!hasTouch || isStandalone || document.fullscreenElement || document.webkitFullscreenElement) return;
+    if (!hasTouch) return;
+
+    const lockLandscape = () => {
+      const lockOrientation = window.screen.orientation?.lock;
+      if (typeof lockOrientation !== "function") return Promise.resolve();
+      return Promise.resolve(lockOrientation.call(window.screen.orientation, "landscape")).catch(() => null);
+    };
+    if (isStandalone || document.fullscreenElement || document.webkitFullscreenElement) {
+      lockLandscape();
+      document.getElementById("mobile-fullscreen-retry")?.remove();
+      return;
+    }
 
     const root = document.documentElement;
     const enterFullscreen = root.requestFullscreen
-      ? () => root.requestFullscreen({ navigationUI: "hide" })
+      ? () => root.requestFullscreen()
       : root.webkitRequestFullscreen
         ? () => root.webkitRequestFullscreen()
         : null;
-    if (!enterFullscreen) return;
+    if (!enterFullscreen) {
+      if (showRetry) this.showImmersiveRetry();
+      return;
+    }
 
     Promise.resolve(enterFullscreen())
-      .then(() => {
-        const lockOrientation = window.screen.orientation?.lock;
-        if (typeof lockOrientation !== "function") return null;
-        return lockOrientation.call(window.screen.orientation, "landscape").catch(() => null);
-      })
-      .catch(() => {});
+      .then(lockLandscape)
+      .then(() => document.getElementById("mobile-fullscreen-retry")?.remove())
+      .catch(() => {
+        if (showRetry) this.showImmersiveRetry();
+      });
+  }
+
+  showImmersiveRetry() {
+    if (document.getElementById("mobile-fullscreen-retry")) return;
+    const button = document.createElement("button");
+    button.id = "mobile-fullscreen-retry";
+    button.type = "button";
+    button.textContent = "PEŁNY EKRAN";
+    button.setAttribute("aria-label", "Włącz pełny ekran i orientację poziomą");
+    button.addEventListener("click", () => this.requestImmersiveMode(false));
+    document.body.appendChild(button);
   }
 
   createMainTabs() {

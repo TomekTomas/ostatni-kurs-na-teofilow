@@ -150,14 +150,37 @@ test("START prosi o pełny ekran na telefonie", async ({ browser }) => {
   await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
   await page.evaluate(() => {
     window.__fullscreenRequestCount = 0;
+    window.__orientationLock = null;
     document.documentElement.requestFullscreen = () => {
       window.__fullscreenRequestCount += 1;
       return Promise.resolve();
     };
+    Object.defineProperty(window.screen.orientation, "lock", {
+      configurable: true,
+      value: (orientation) => {
+        window.__orientationLock = orientation;
+        return Promise.resolve();
+      }
+    });
   });
   await page.evaluate(() => window.__KURS8_GAME__.scene.getScene("MenuScene").startSelectedGame());
-  await page.waitForFunction(() => window.__fullscreenRequestCount === 1);
+  await page.waitForFunction(() => window.__fullscreenRequestCount === 1 && window.__orientationLock === "landscape");
   expect(await page.evaluate(() => window.__fullscreenRequestCount)).toBe(1);
+  expect(await page.evaluate(() => window.__orientationLock)).toBe("landscape");
+  await context.close();
+});
+
+test("pokazuje ponowienie, gdy telefon zablokuje pełny ekran", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+  await page.goto("http://127.0.0.1:4173/game.html");
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
+  await page.evaluate(() => {
+    document.documentElement.requestFullscreen = () => Promise.reject(new Error("blocked"));
+    window.__KURS8_GAME__.scene.getScene("MenuScene").requestImmersiveMode();
+  });
+  await expect(page.locator("#mobile-fullscreen-retry")).toBeVisible();
+  await expect(page.locator("#mobile-fullscreen-retry")).toHaveText("PEŁNY EKRAN");
   await context.close();
 });
 
