@@ -9,6 +9,7 @@ export class PreloadGameScene extends Phaser.Scene {
   init(data = {}) {
     this.gameData = data;
     this.failedAssets = [];
+    this.optionalAudioKeys = new Set(["ride-konstal", "ride-pesa"]);
   }
 
   preload() {
@@ -30,7 +31,9 @@ export class PreloadGameScene extends Phaser.Scene {
       this.progressFill.width = Math.max(1, 638 * progress);
       this.progressText.setText(`${Math.round(progress * 100)}%`);
     });
-    this.load.on("loaderror", (file) => this.failedAssets.push(file.src || file.key));
+    this.load.on("loaderror", (file) => {
+      if (!this.optionalAudioKeys.has(file.key)) this.failedAssets.push(file.src || file.key);
+    });
     queueGameAssets(this);
   }
 

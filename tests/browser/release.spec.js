@@ -104,7 +104,7 @@ test("gra uruchamia menu offline po pierwszym wczytaniu", async ({ page, context
 });
 
 test("interfejs miesci sie w mobilnym landscape", async ({ browser }) => {
-  const context = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
+  const context = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   const page = await context.newPage();
   await page.goto("http://127.0.0.1:4173/game.html");
   await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
@@ -112,6 +112,34 @@ test("interfejs miesci sie w mobilnym landscape", async ({ browser }) => {
   expect(box.width).toBeLessThanOrEqual(844);
   expect(box.height).toBeLessThanOrEqual(390);
   expect(box.width).toBeGreaterThan(600);
+  await page.evaluate(() => window.__KURS8_GAME__.scene.getScene("MenuScene").startSelectedGame());
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("GameScene"), null, { timeout: 30_000 });
+  expect(await page.evaluate(() => window.__KURS8_GAME__.scene.getScene("GameScene").touchLayer.visible)).toBe(true);
+  await context.close();
+});
+
+test("gra startuje po obróceniu telefonu do poziomu", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("http://127.0.0.1:4173/game.html");
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("MenuScene"));
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(500);
+  await page.evaluate(() => window.__KURS8_GAME__.scene.getScene("MenuScene").startSelectedGame());
+  await page.waitForFunction(() => window.__KURS8_GAME__?.scene?.isActive("GameScene"), null, { timeout: 30_000 });
+  const mobileState = await page.evaluate(() => {
+    const scene = window.__KURS8_GAME__.scene.getScene("GameScene");
+    return { touchVisible: scene.touchLayer.visible, width: scene.scale.width, height: scene.scale.height };
+  });
+  expect(mobileState.touchVisible).toBe(true);
+  expect(mobileState.width).toBeGreaterThanOrEqual(1280);
+  expect(mobileState.height).toBe(720);
+  expect(errors).toEqual([]);
   await context.close();
 });
 

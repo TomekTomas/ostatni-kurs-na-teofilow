@@ -1,4 +1,4 @@
-import { BASE_WIDTH, FONT_FAMILY, HEIGHT, START_ASPECT, WIDTH } from "./config/constants.js";
+import { FONT_FAMILY, HEIGHT, WIDTH } from "./config/constants.js";
 import { BootScene } from "./scenes/BootScene.js";
 import { MenuScene } from "./scenes/MenuScene.js";
 import { PreloadGameScene } from "./scenes/PreloadGameScene.js";
@@ -30,27 +30,24 @@ window.addEventListener("load", () => {
   Phaser.GameObjects.GameObjectFactory.prototype.text = function patchedLexendText(x, y, text, style = {}) {
     return originalTextFactory.call(this, x, y, text, { fontFamily: FONT_FAMILY, ...style });
   };
+  let game = null;
   const startGame = () => {
-    const game = new Phaser.Game(config);
+    game = new Phaser.Game(config);
     if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
       window.__KURS8_GAME__ = game;
     }
     attachRuntimeGuards(game);
     return game;
   };
-  const reloadForLandscape = () => {
-    if (!("ontouchstart" in window) && navigator.maxTouchPoints <= 0) return;
+  const refreshGameScale = () => {
     window.clearTimeout(window.__lastCourseResizeTimer);
-    window.__lastCourseResizeTimer = window.setTimeout(() => window.location.reload(), 260);
+    window.__lastCourseResizeTimer = window.setTimeout(() => {
+      game?.scale?.refresh();
+    }, 180);
   };
-  const reloadForSizeChange = () => {
-    const aspect = (window.visualViewport?.width || window.innerWidth || BASE_WIDTH) / (window.visualViewport?.height || window.innerHeight || HEIGHT);
-    if (Math.abs(aspect - START_ASPECT) < 0.08) return;
-    window.clearTimeout(window.__lastCourseResizeTimer);
-    window.__lastCourseResizeTimer = window.setTimeout(() => window.location.reload(), 420);
-  };
-  window.addEventListener("orientationchange", reloadForLandscape, { passive: true });
-  window.addEventListener("resize", reloadForSizeChange, { passive: true });
+  window.addEventListener("orientationchange", refreshGameScale, { passive: true });
+  window.addEventListener("resize", refreshGameScale, { passive: true });
+  window.visualViewport?.addEventListener("resize", refreshGameScale, { passive: true });
   if (document.fonts && document.fonts.load) {
     document.fonts.load('16px "Lexend Deca"').finally(startGame);
   } else {
@@ -67,7 +64,7 @@ function attachRuntimeGuards(game) {
     if (!target || document.getElementById("renderer-warning")) return;
     const warning = document.createElement("div");
     warning.id = "renderer-warning";
-    warning.textContent = "Renderer zostal zatrzymany. Odswiez gre, jesli obraz nie wroci automatycznie.";
+    warning.textContent = "Renderer został zatrzymany. Odśwież grę, jeśli obraz nie wróci automatycznie.";
     target.appendChild(warning);
   });
   canvas.addEventListener("webglcontextrestored", () => {
