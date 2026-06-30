@@ -950,7 +950,8 @@ export class GameScene extends Phaser.Scene {
 
     const delta = stop.distance - this.distance;
     if (delta < 380 && delta > -160 && !stop.served) {
-      this.showMessage(`${stop.name}: zatrzymaj się w strefie i naciśnij SPACJĘ`, 260, "#f4d35e");
+      const actionHint = this.touchLayer?.visible ? "przycisk DRZWI / DZWONEK" : "SPACJĘ";
+      this.showMessage(`${stop.name}: zatrzymaj się w strefie i naciśnij ${actionHint}`, 260, "#f4d35e");
     }
 
     if (delta > 0 && delta < 720 && !stop.served) {
@@ -1126,7 +1127,8 @@ export class GameScene extends Phaser.Scene {
 
       if (event.type === "car" && !event.cleared) {
         if (noseRelative < event.warnDistance && noseRelative > event.stopDistance) {
-          this.showMessage("AUTO NA TORACH - zwolnij i SPACJA: dzwonek", 260, "#ffb22e");
+          const bellHint = this.touchLayer?.visible ? "użyj DZWONKA" : "SPACJA: dzwonek";
+          this.showMessage(`AUTO NA TORACH - zwolnij i ${bellHint}`, 260, "#ffb22e");
         }
         if (noseRelative <= event.stopDistance && noseRelative > event.collisionHalfWidth && this.speed > 7) {
           this.showMessage("Auto blokuje tor - hamuj albo DRYN", 240, "#ffb22e");
